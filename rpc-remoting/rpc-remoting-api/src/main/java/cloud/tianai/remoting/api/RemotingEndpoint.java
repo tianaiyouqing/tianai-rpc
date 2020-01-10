@@ -1,0 +1,30 @@
+package cloud.tianai.remoting.api;
+
+import cloud.tianai.remoting.api.exception.RpcRemotingException;
+
+public interface RemotingEndpoint {
+    /**
+     * 启动远程
+     * @param config 配置消息
+     * @return channel持有者
+     * @throws RpcRemotingException 启动失败会抛异常
+     */
+    RemotingChannelHolder start(RemotingConfiguration config) throws RpcRemotingException;
+
+    /**
+     * 停止
+     */
+    void stop();
+
+    /**
+     * 是否启动
+     * @return boolean
+     */
+    boolean isStart();
+
+    /**
+     * 获取远程client类型
+     * @return
+     */
+    String getRemotingType();
+}
