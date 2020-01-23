@@ -2,17 +2,15 @@ package cloud.tianai.rpc.common;
 
 import cloud.tianai.rpc.common.util.CollectionUtils;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 拷贝dubbo源码
- *
+ * <p>
  * "dubbo://127.0.0.1:20880/com.xxx.XxxService"
  * "dubbo.version=2.0.0&group=test&version=1.0.0"
  * dubbo://127.0.0.1:20880/com.xxx.XxxService?version=1.0.0&group=test
@@ -21,6 +19,11 @@ import java.util.Map;
 public final class URL implements Serializable {
 
     public static final String METHODS_KEY = "methods";
+
+    public static final String INTERFACE_KEY = "interface";
+    public static final String PATH_SEPARATOR = "/";
+    public static final String ANY_VALUE = "*";
+
     /**
      * 协议.
      */
@@ -167,6 +170,7 @@ public final class URL implements Serializable {
 
     /**
      * 拷贝 dubbo源码
+     *
      * @param url
      * @return
      */
@@ -289,6 +293,108 @@ public final class URL implements Serializable {
 
     public static void main(String[] args) {
         URL url = URL.valueOf("dubbo://127.0.0.1:20880/com.xxx.XxxService?version=1.0.0&group=test");
+
+        String urlStr = url.toString();
+
         System.out.println(url);
+        System.out.println(urlStr);
     }
+
+    public String getAddress() {
+        return port <= 0 ? host : host + ":" + port;
+    }
+
+    public String getParameter(String key) {
+        return parameters.get(key);
+    }
+
+    public String getParameter(String key, String defaultValue) {
+        String value = getParameter(key);
+        return StringUtils.isEmpty(value) ? defaultValue : value;
+    }
+
+    public String getServiceInterface() {
+        return getParameter(INTERFACE_KEY, path);
+    }
+
+
+    @Override
+    public String toString() {
+        if (string != null) {
+            return string;
+        }
+        return string = buildString(false, true); // no show username and password
+    }
+
+    private String buildString(boolean appendUser, boolean appendParameter, String... parameters) {
+        return buildString(appendUser, appendParameter, false, false, parameters);
+    }
+
+    private String buildString(boolean appendUser, boolean appendParameter, boolean useIP, boolean useService, String... parameters) {
+        StringBuilder buf = new StringBuilder();
+        if (StringUtils.isNotEmpty(protocol)) {
+            buf.append(protocol);
+            buf.append("://");
+        }
+        if (appendUser && StringUtils.isNotEmpty(username)) {
+            buf.append(username);
+            if (StringUtils.isNotEmpty(password)) {
+                buf.append(":");
+                buf.append(password);
+            }
+            buf.append("@");
+        }
+        String host;
+        if (useIP) {
+            host = getIp();
+        } else {
+            host = getHost();
+        }
+        if (StringUtils.isNotEmpty(host)) {
+            buf.append(host);
+            if (port > 0) {
+                buf.append(":");
+                buf.append(port);
+            }
+        }
+        String path;
+        if (useService) {
+            path = getServiceKey();
+        } else {
+            path = getPath();
+        }
+        if (StringUtils.isNotEmpty(path)) {
+            buf.append("/");
+            buf.append(path);
+        }
+
+        if (appendParameter) {
+            buildParameters(buf, true, parameters);
+        }
+        return buf.toString();
+    }
+
+    private void buildParameters(StringBuilder buf, boolean concat, String[] parameters) {
+        if (CollectionUtils.isNotEmptyMap(getParameters())) {
+            List<String> includes = (ArrayUtils.isEmpty(parameters) ? null : Arrays.asList(parameters));
+            boolean first = true;
+            for (Map.Entry<String, String> entry : new TreeMap<>(getParameters()).entrySet()) {
+                if (StringUtils.isNotEmpty(entry.getKey())
+                        && (includes == null || includes.contains(entry.getKey()))) {
+                    if (first) {
+                        if (concat) {
+                            buf.append("?");
+                        }
+                        first = false;
+                    } else {
+                        buf.append("&");
+                    }
+                    buf.append(entry.getKey());
+                    buf.append("=");
+                    buf.append(entry.getValue() == null ? "" : entry.getValue().trim());
+                }
+            }
+        }
+    }
+
 }

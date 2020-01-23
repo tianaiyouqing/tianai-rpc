@@ -11,6 +11,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>rpc-register-api</module>
+        <module>rpc-register-zookeeper</module>
     </modules>
     <groupId>cloud.tianai.rpc.register</groupId>
     <artifactId>rpc-register</artifactId>
