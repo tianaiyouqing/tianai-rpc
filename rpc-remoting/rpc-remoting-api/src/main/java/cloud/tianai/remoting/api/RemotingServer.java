@@ -9,4 +9,9 @@ import cloud.tianai.remoting.api.exception.RpcRemotingException;
  */
 public interface RemotingServer extends RemotingEndpoint{
 
+    /**
+     * 远程配置
+     * @return
+     */
+    RemotingServerConfiguration getRemotingServerConfiguration();
 }

@@ -2,6 +2,7 @@ package cloud.tianai.rpc.registry.zookeeper;
 
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
+import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.CollectionUtils;
 import cloud.tianai.rpc.registory.api.NotifyListener;
 import cloud.tianai.rpc.registory.api.Registry;
@@ -11,6 +12,8 @@ import org.I0Itec.zkclient.exception.ZkNodeExistsException;
 import org.apache.zookeeper.CreateMode;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @Author: 天爱有情
@@ -39,11 +42,18 @@ public class ZookeeperRegistry implements Registry {
     /** 根目录. */
     private String root;
 
+    private AtomicBoolean start = new AtomicBoolean(false);
 
+    private ReentrantLock lock = new ReentrantLock();
 
-    public ZookeeperRegistry(URL url) {
+    @Override
+    public Registry start(URL url) {
+        if(!start.compareAndSet(false, true)) {
+                throw new RpcException("已经启动，不可重复启动");
+        }
         this.zookeeperUrl = url;
         init();
+        return this;
     }
 
     private void init() {
@@ -134,6 +144,8 @@ public class ZookeeperRegistry implements Registry {
             zkClient.unsubscribeDataChanges(getInterfacePath(url.getServiceInterface()), iZkDataListener);
         }
     }
+
+
 
 
     public static class ZkDataListenerAdapter implements IZkDataListener {

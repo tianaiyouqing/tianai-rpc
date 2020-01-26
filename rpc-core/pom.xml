@@ -9,43 +9,31 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rpc-demo</artifactId>
+    <artifactId>rpc-core</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>cloud.tianai.rpc.remoting</groupId>
-            <artifactId>rpc-remoting-netty</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>cloud.tianai.rpc.remoting.codec</groupId>
-            <artifactId>rpc-remoting-codec-hessian2</artifactId>
-            <version>1.0</version>
-        </dependency>
-
-
-        <dependency>
             <groupId>cloud.tianai.rpc</groupId>
-            <artifactId>rpc-core</artifactId>
-            <version>1.0</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>cloud.tianai.rpc.remoting.codec</groupId>
-            <artifactId>rpc-remoting-codec-hessian2</artifactId>
+            <artifactId>rpc-common</artifactId>
             <version>1.0</version>
         </dependency>
 
         <dependency>
             <groupId>cloud.tianai.rpc.remoting</groupId>
-            <artifactId>rpc-remoting-netty</artifactId>
+            <artifactId>rpc-remoting-api</artifactId>
+            <version>1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cloud.tianai.rpc.remoting.codec</groupId>
+            <artifactId>rpc-remoting-codec-api</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>cloud.tianai.rpc.register</groupId>
-            <artifactId>rpc-register-zookeeper</artifactId>
+            <artifactId>rpc-register-api</artifactId>
             <version>1.0</version>
         </dependency>
     </dependencies>
+
 </project>

@@ -37,6 +37,7 @@ public class NettyServer extends AbstractRemotingServer {
     private InetSocketAddress address;
     private NettyHandler customHandler;
 
+    private RemotingServerConfiguration remotingServerConfiguration;
     @Override
     public RemotingChannelHolder doStart(RemotingServerConfiguration config) throws RpcRemotingException {
 
@@ -62,6 +63,7 @@ public class NettyServer extends AbstractRemotingServer {
 
         NettyRemotingChannelHolder channelHolder = NettyRemotingChannelHolder.create(channel);
 
+        this.remotingServerConfiguration = config;
         return channelHolder;
     }
 
@@ -139,5 +141,10 @@ public class NettyServer extends AbstractRemotingServer {
     @Override
     public String getRemotingType() {
         return SERVER_TYPE;
+    }
+
+    @Override
+    public RemotingServerConfiguration getRemotingServerConfiguration() {
+        return remotingServerConfiguration;
     }
 }

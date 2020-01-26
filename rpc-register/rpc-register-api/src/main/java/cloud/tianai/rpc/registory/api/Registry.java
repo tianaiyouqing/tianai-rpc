@@ -39,4 +39,10 @@ public interface Registry {
      * @param listener
      */
     void unsubscribe(URL url, NotifyListener listener);
+
+    /**
+     * 初始化
+     * @param url
+     */
+    Registry start(URL url);
 }
