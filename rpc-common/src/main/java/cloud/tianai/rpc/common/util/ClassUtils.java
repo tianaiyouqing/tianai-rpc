@@ -16,6 +16,9 @@ public class ClassUtils {
     }
 
     public static Class<?>[] getType(Object[] params) {
+        if(params == null || params.length < 1) {
+            return new Class<?>[0];
+        }
         Class<?>[] classArr = new Class[params.length];
         for (int i = 0; i < params.length; i++) {
             Class<?> clazz = params[i].getClass();

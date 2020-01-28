@@ -15,6 +15,7 @@ public class ZookeeperRegistryTest {
 
         URL url = new URL("zookeeper", "127.0.0.1", 2181);
         Registry registry = new ZookeeperRegistry();
+        registry.start(url);
 
 
 

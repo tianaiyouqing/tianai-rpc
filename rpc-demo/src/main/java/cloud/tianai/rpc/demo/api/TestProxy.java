@@ -2,6 +2,7 @@ package cloud.tianai.rpc.demo.api;
 
 import cloud.tianai.remoting.api.RemotingChannelHolder;
 import cloud.tianai.remoting.api.Request;
+import cloud.tianai.remoting.api.Response;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -30,7 +31,9 @@ public class TestProxy implements InvocationHandler {
         request.setHeartbeat(false);
         CompletableFuture<Object> future = remotingChannelHolder.request(request, 3000);
         Object result = future.get(10, TimeUnit.SECONDS);
-
+        if(result instanceof Response) {
+            result = ((Response) result).getResult();
+        }
         return result;
     }
 }

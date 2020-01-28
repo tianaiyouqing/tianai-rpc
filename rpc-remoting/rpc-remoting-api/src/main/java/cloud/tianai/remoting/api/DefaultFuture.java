@@ -1,6 +1,5 @@
 package cloud.tianai.remoting.api;
 
-import cloud.tianai.remoting.api.exception.RpcRemotingException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -10,7 +9,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Data
@@ -42,11 +40,6 @@ public class DefaultFuture extends CompletableFuture<Object> {
         try {
             DefaultFuture future = FUTURES.remove(response.getId());
             if (future != null) {
-//                Timeout t = future.timeoutCheckTask;
-//                if (!timeout) {
-//                    // decrease Time
-//                    t.cancel();
-//                }
                 future.doReceived(response);
             } else {
                 log.warn("The timeout response finally returned at "
@@ -64,13 +57,13 @@ public class DefaultFuture extends CompletableFuture<Object> {
         if (res == null) {
             throw new IllegalStateException("response cannot be null");
         }
-        if (res.getStatus() == Response.OK) {
-            this.complete(res.getResult());
-        } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
-            this.completeExceptionally(new TimeoutException(res.getErrorMessage()));
-        } else {
-            this.completeExceptionally(new RpcRemotingException(res.getErrorMessage()));
-        }
+//        if (res.getStatus() == Response.OK) {
+        this.complete(res);
+//        } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
+//            this.completeExceptionally(new TimeoutException(res.getErrorMessage()));
+//        } else {
+//            this.completeExceptionally(new RpcRemotingException(res.getErrorMessage()));
+//        }
     }
 
     public static DefaultFuture newFuture(Channel channel, Request request, int timeout) {

@@ -6,6 +6,7 @@ public class DemoImpl implements Demo, Serializable {
 
     @Override
     public String sayHello() {
+        System.out.println("sayHello调用");
         return "hello rpc";
     }
 }

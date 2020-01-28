@@ -1,4 +1,4 @@
-package cloud.tianai.rpc.core.server.remoting;
+package cloud.tianai.rpc.core.factory;
 
 import cloud.tianai.remoting.api.RemotingServer;
 import cloud.tianai.remoting.api.RemotingServerConfiguration;

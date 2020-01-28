@@ -6,7 +6,11 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * 拷贝dubbo源码
@@ -24,6 +28,7 @@ public final class URL implements Serializable {
     public static final String PATH_SEPARATOR = "/";
     public static final String ANY_VALUE = "*";
 
+    public static final Pattern COMMA_SPLIT_PATTERN = Pattern.compile("\\s*[,]+\\s*");
     /**
      * 协议.
      */
@@ -313,6 +318,11 @@ public final class URL implements Serializable {
         return StringUtils.isEmpty(value) ? defaultValue : value;
     }
 
+    public String[] getParameter(String key, String[] defaultValue) {
+        String value = getParameter(key);
+        return StringUtils.isEmpty(value) ? defaultValue : COMMA_SPLIT_PATTERN.split(value);
+    }
+
     public String getServiceInterface() {
         return getParameter(INTERFACE_KEY, path);
     }
@@ -374,6 +384,13 @@ public final class URL implements Serializable {
         return buf.toString();
     }
 
+    public String toFullString() {
+        if (full != null) {
+            return full;
+        }
+        return full = buildString(true, true);
+    }
+
     private void buildParameters(StringBuilder buf, boolean concat, String[] parameters) {
         if (CollectionUtils.isNotEmptyMap(getParameters())) {
             List<String> includes = (ArrayUtils.isEmpty(parameters) ? null : Arrays.asList(parameters));
@@ -396,5 +413,29 @@ public final class URL implements Serializable {
             }
         }
     }
+
+    public static String encode(String value) {
+        if (StringUtils.isEmpty(value)) {
+            return "";
+        }
+        try {
+            return URLEncoder.encode(value, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public static String decode(String value) {
+        if (StringUtils.isEmpty(value)) {
+            return "";
+        }
+        try {
+            return URLDecoder.decode(value, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+
 
 }

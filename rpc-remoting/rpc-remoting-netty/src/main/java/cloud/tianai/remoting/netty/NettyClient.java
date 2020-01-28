@@ -3,7 +3,6 @@ package cloud.tianai.remoting.netty;
 import cloud.tianai.remoting.api.AbstractRemotingClient;
 import cloud.tianai.remoting.api.RemotingChannelHolder;
 import cloud.tianai.remoting.api.RemotingConfiguration;
-import cloud.tianai.remoting.api.RemotingServerConfiguration;
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -29,21 +28,12 @@ public class NettyClient extends AbstractRemotingClient {
 
     private Channel channel;
     private EventLoopGroup workerGroup;
-    private ChannelHandler encode;
-    private ChannelHandler decode;
-    private NettyHandler customHandler;
 
     @Override
     public RemotingChannelHolder doStart(RemotingConfiguration config) throws RpcRemotingException {
         Bootstrap bs = new Bootstrap();
         // 初始化eventLoopGroup
         initEventLoopGroup(config);
-
-        // 初始化编码解码器
-        initCodec(config);
-
-        // 初始化自定义handler
-        initCustomHandler(config);
 
         // 包装bootstrap
         warpBootStrap(bs, config);
@@ -57,13 +47,13 @@ public class NettyClient extends AbstractRemotingClient {
     private Channel connect(Bootstrap bs, RemotingConfiguration config) {
         ChannelFuture channelFuture = bs.connect(new InetSocketAddress(config.getHost(), config.getPort()));
         boolean ret = channelFuture.awaitUninterruptibly(config.getConnectTimeout(), MILLISECONDS);
-        if(ret && channelFuture.isSuccess()) {
+        if (ret && channelFuture.isSuccess()) {
             channel = channelFuture.channel();
             return channel;
         }
         throw new RpcRemotingException("client链接超时," +
-                " host=[" + config.getHost() +"]," +
-                " port=[" + config.getPort() +"]," +
+                " host=[" + config.getHost() + "]," +
+                " port=[" + config.getPort() + "]," +
                 " 超时时间:" + config.getConnectTimeout() + MILLISECONDS.toString()
         );
     }
@@ -79,23 +69,11 @@ public class NettyClient extends AbstractRemotingClient {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast("Encoder", encode);
-                        pipeline.addLast("Decoder", decode);
-                        pipeline.addLast("handler", customHandler);
+                        pipeline.addLast("Encoder", new NettyEncoder(config.getEncoder()));
+                        pipeline.addLast("Decoder", new NettyDecoder(config.getDecoder()));
+                        pipeline.addLast("handler", new NettyHandler(config.getRemotingDataProcessor()));
                     }
                 });
-    }
-
-    private void initCodec(RemotingConfiguration config) {
-        if (encode != null && decode != null) {
-            return;
-        }
-        encode = new NettyEncoder(config.getEncoder());
-        decode = new NettyDecoder(config.getDecoder());
-    }
-
-    private void initCustomHandler(RemotingConfiguration config) {
-        customHandler = new NettyHandler(config.getRemotingDataProcessor());
     }
 
     private void initEventLoopGroup(RemotingConfiguration config) {

@@ -12,7 +12,6 @@
         <module>rpc-remoting</module>
         <module>rpc-demo</module>
         <module>rpc-register</module>
-        <module>rpc-proxy</module>
         <module>rpc-core</module>
     </modules>
     <packaging>pom</packaging>

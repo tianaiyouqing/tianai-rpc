@@ -6,50 +6,61 @@ import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.CollectionUtils;
 import cloud.tianai.rpc.registory.api.NotifyListener;
 import cloud.tianai.rpc.registory.api.Registry;
-import org.I0Itec.zkclient.IZkDataListener;
+import lombok.extern.slf4j.Slf4j;
+import org.I0Itec.zkclient.IZkChildListener;
+import org.I0Itec.zkclient.IZkStateListener;
 import org.I0Itec.zkclient.ZkClient;
-import org.I0Itec.zkclient.exception.ZkNodeExistsException;
+import org.I0Itec.zkclient.exception.ZkNoNodeException;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.Watcher;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @Author: 天爱有情
  * @Date: 2020/01/23 12:08
  * @Description: 基于zookeeper的注册器
  */
+@Slf4j
 public class ZookeeperRegistry implements Registry {
 
-    /** 默认的根目录地址. */
+    /**
+     * 默认的根目录地址.
+     */
     private final static String DEFAULT_ROOT = "/tianai-rpc";
-
+    private final static String PATH_SEPARATOR = "/";
     /**
      * 存放自定义监听器和 zk监听器的绑定
      * NotifyListener -> IZkDataListener
      */
-    private Map<NotifyListener, IZkDataListener> notifyListenerIZkDataListenerMap = new HashMap<>(32);
+    private Map<NotifyListener, IZkChildListener> notifyListenerZkDataListenerMap = new HashMap<>(32);
 
-    /** zk集群时使用，暂时不用. */
-    String GROUP_KEY = "group";
+    /**
+     * zk集群时使用，暂时不用.
+     */
+    public static final String GROUP_KEY = "group";
 
-    /** 创建zookeeper时需要的url地址. */
+    /**
+     * 创建zookeeper时需要的url地址.
+     */
     private URL zookeeperUrl;
 
-    /** zookeeper客户端. */
+    /**
+     * zookeeper客户端.
+     */
     private ZkClient zkClient;
-    /** 根目录. */
+    /**
+     * 根目录.
+     */
     private String root;
 
     private AtomicBoolean start = new AtomicBoolean(false);
 
-    private ReentrantLock lock = new ReentrantLock();
-
     @Override
     public Registry start(URL url) {
-        if(!start.compareAndSet(false, true)) {
-                throw new RpcException("已经启动，不可重复启动");
+        if (!start.compareAndSet(false, true)) {
+            throw new RpcException("已经启动，不可重复启动");
         }
         this.zookeeperUrl = url;
         init();
@@ -59,10 +70,13 @@ public class ZookeeperRegistry implements Registry {
     private void init() {
         // todo zookeeperRegistry 这是暂时先设置为单机版
         String address = zookeeperUrl.getAddress();
-        zkClient = new ZkClient(address);
+        int timeout = Integer.parseInt(zookeeperUrl.getParameter("timeout", String.valueOf(5000)));
+        zkClient = new ZkClient(address, timeout);
+        zkClient.subscribeStateChanges(new WatcherListener());
         this.root = zookeeperUrl.getParameter(GROUP_KEY, DEFAULT_ROOT);
         // 判断根节点是否存在，如果不存在则创建， 创建类型必须是持久类型的
         createNodeIfNecessary(this.root, CreateMode.PERSISTENT);
+        //todo 启动一个守护线程定时清除为空的持久数据
     }
 
     private void createNodeIfNecessary(String node, CreateMode createMode) {
@@ -75,46 +89,35 @@ public class ZookeeperRegistry implements Registry {
 
     @Override
     public Result<?> register(URL url) {
-        String urlPath = url.toString();
-        String address = getInterfacePath(url.getServiceInterface());
-        List<URL> urls;
         try {
-            urls = new ArrayList<>(1);
-            urls.add(url);
-            String res = zkClient.create(address, urls, CreateMode.EPHEMERAL);
-        } catch (ZkNodeExistsException e) {
-            // 表示该节点已存在, 把当前url添加到该列表
-            urls = addUrl(address, url);
-        } catch (Exception e) {
-            return Result.ofError(e.getMessage());
+            try {
+                String path = getPath(url);
+                create(path + PATH_SEPARATOR + URL.encode(url.toString()));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (ZkNoNodeException e) {
+            // 创建
         }
-        return Result.ofSuccess(urls);
+        return Result.ofSuccess("success");
     }
 
-    private String getInterfacePath(String serviceInterface) {
-        String path = root + "/" + serviceInterface;
-        return path;
-    }
-
-    private List<URL> addUrl(String address, URL url) {
-        // 创建失败
-        List<URL> urls = zkClient.readData(address);
-        if (CollectionUtils.isEmpty(urls)) {
-            urls = new ArrayList<>(1);
-        }
-        urls.add(url);
-        // 回写
-        zkClient.writeData(address, urls);
-        return urls;
+    private String getPath(URL url) {
+        return toRootPath() + PATH_SEPARATOR + url.getServiceInterface();
     }
 
     @Override
     public Result<List<URL>> lookup(URL url) {
-        String path = getInterfacePath(url.getServiceInterface());
+        List<URL> urls = Collections.emptyList();
         try {
-            List<URL> urls = zkClient.readData(path);
-            if (null == urls) {
-                return Result.ofSuccess(Collections.emptyList());
+            List<String> children = zkClient.getChildren(getPath(url));
+            if (CollectionUtils.isNotEmpty(children)) {
+                urls = new ArrayList<>(children.size());
+                for (String child : children) {
+                    String decodeChild = URL.decode(child);
+                    URL u = URL.valueOf(decodeChild);
+                    urls.add(u);
+                }
             }
             return Result.ofSuccess(urls);
         } catch (Exception e) {
@@ -125,44 +128,119 @@ public class ZookeeperRegistry implements Registry {
 
     @Override
     public void subscribe(URL url, NotifyListener listener) {
-        String path = getInterfacePath(url.getServiceInterface());
+        String path = getPath(url);
         // 判断是否存在
         if (!zkClient.exists(path)) {
             // 如果不存在，创建一个空的node
-            createNodeIfNecessary(path, CreateMode.EPHEMERAL);
+            create(path + PATH_SEPARATOR + URL.encode(url.toString()));
         }
-        ZkDataListenerAdapter zkDataListenerAdapter = new ZkDataListenerAdapter(listener);
-        zkClient.subscribeDataChanges(path, zkDataListenerAdapter);
-        notifyListenerIZkDataListenerMap.put(listener, zkDataListenerAdapter);
+        ZkChildListenerAdapter zkChildListenerAdapter = new ZkChildListenerAdapter(listener);
+        zkClient.subscribeChildChanges(path, zkChildListenerAdapter);
+        notifyListenerZkDataListenerMap.put(listener, zkChildListenerAdapter);
     }
 
     @Override
     public void unsubscribe(URL url, NotifyListener listener) {
-        IZkDataListener iZkDataListener = notifyListenerIZkDataListenerMap.get(listener);
-        if(!Objects.isNull(iZkDataListener)) {
+        IZkChildListener iZkChildListener = notifyListenerZkDataListenerMap.get(listener);
+        if (!Objects.isNull(iZkChildListener)) {
             // 如果不为空，则删除该监听器
-            zkClient.unsubscribeDataChanges(getInterfacePath(url.getServiceInterface()), iZkDataListener);
+            zkClient.unsubscribeChildChanges(getPath(url), iZkChildListener);
+        }
+    }
+
+    public void destroy() {
+        if (zkClient != null) {
+            try {
+                zkClient.close();
+                zkClient = null;
+            } catch (Exception e) {
+                log.error("the service zk close faild info={}", zookeeperUrl);
+            }
+        }
+    }
+
+    private String toRootPath() {
+        return root;
+    }
+
+    public void create(String path) {
+        int indexOf = path.lastIndexOf(PATH_SEPARATOR);
+        if (indexOf > 0) {
+            // 父节点必须创建持久类型的数据
+            createPersistent(path.substring(0, indexOf));
+        }
+        // 创建临时节点
+        createEphemeral(path);
+    }
+
+    private void createEphemeral(String path) {
+        if (!zkClient.exists(path)) {
+            zkClient.createEphemeral(path);
+        }
+    }
+
+    private void createPersistent(String path) {
+        int i = path.lastIndexOf('/');
+        if (i > 0) {
+            createPersistent(path.substring(0, i));
+        }
+        if (!zkClient.exists(path)) {
+            zkClient.createPersistent(path);
+        }
+    }
+
+    private class WatcherListener implements IZkStateListener {
+
+        @Override
+        public void handleStateChanged(Watcher.Event.KeeperState state) {
+            if (Watcher.Event.KeeperState.Expired == state || Watcher.Event.KeeperState.Disconnected == state) {
+                System.out.println("重连zookeeper");
+                reConnected();
+            }
+        }
+
+        @Override
+        public void handleNewSession() {
+
+        }
+
+        @Override
+        public void handleSessionEstablishmentError(Throwable error) {
+
+        }
+
+        private void reConnected() {
+            ZookeeperRegistry.this.destroy();
+            try {
+                //wait for the zk server start success!
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                log.error(e.getMessage(), e);
+            }
+            ZookeeperRegistry.this.init();
         }
     }
 
 
-
-
-    public static class ZkDataListenerAdapter implements IZkDataListener {
+    public static class ZkChildListenerAdapter implements IZkChildListener {
         private NotifyListener notifyListener;
 
-        public ZkDataListenerAdapter(NotifyListener notifyListener) {
+        public ZkChildListenerAdapter(NotifyListener notifyListener) {
             this.notifyListener = notifyListener;
         }
 
         @Override
-        public void handleDataChange(String dataPath, Object data) throws Exception {
-            notifyListener.notify((List<URL>) data);
-        }
-
-        @Override
-        public void handleDataDeleted(String dataPath) throws Exception {
-            notifyListener.notify(Collections.emptyList());
+        public void handleChildChange(String parentPath, List<String> currentChilds) {
+            if (CollectionUtils.isEmpty(currentChilds)) {
+                notifyListener.notify(Collections.emptyList());
+            } else {
+                List<URL> urls = new ArrayList<>(currentChilds.size());
+                for (String child : currentChilds) {
+                    String urlDecode = URL.decode(child);
+                    urls.add(URL.valueOf(urlDecode));
+                }
+                notifyListener.notify(urls);
+            }
         }
     }
 }

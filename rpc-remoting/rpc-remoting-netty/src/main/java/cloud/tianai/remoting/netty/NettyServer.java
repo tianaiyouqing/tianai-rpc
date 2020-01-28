@@ -32,10 +32,7 @@ public class NettyServer extends AbstractRemotingServer {
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel channel;
-    private ChannelHandler encode;
-    private ChannelHandler decode;
     private InetSocketAddress address;
-    private NettyHandler customHandler;
 
     private RemotingServerConfiguration remotingServerConfiguration;
     @Override
@@ -45,12 +42,6 @@ public class NettyServer extends AbstractRemotingServer {
 
         // 创建eventLoopGroup
         initEventLoopGroup(config);
-
-        // 初始化编码解码器
-        initCodec(config);
-
-        // 初始化自定义handler
-        initCustomHandler(config);
 
         // 包装bootstrap
         warpBootStrap(serverBootstrap, config);
@@ -67,9 +58,6 @@ public class NettyServer extends AbstractRemotingServer {
         return channelHolder;
     }
 
-    private void initCustomHandler(RemotingServerConfiguration config) {
-        customHandler = new NettyHandler(config.getRemotingDataProcessor());
-    }
 
     private ChannelFuture bind(ServerBootstrap serverBootstrap, RemotingServerConfiguration config) {
         String host = config.getHost();
@@ -97,21 +85,15 @@ public class NettyServer extends AbstractRemotingServer {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast("Encoder", encode);
-                        pipeline.addLast("Decoder", decode);
+//                        encode = new NettyEncoder(config.getEncoder());
+//                        decode = new NettyDecoder(config.getDecoder());
+                        pipeline.addLast("Encoder", new NettyEncoder(config.getEncoder()));
+                        pipeline.addLast("Decoder", new NettyDecoder(config.getDecoder()));
                         pipeline.addLast("server-idle-handler",
                                 new IdleStateHandler(0, 0, config.getIdleTimeout(), MILLISECONDS));
-                        pipeline.addLast("handler", customHandler);
+                        pipeline.addLast("handler", new NettyHandler(config.getRemotingDataProcessor()));
                     }
                 });
-    }
-
-    private void initCodec(RemotingServerConfiguration config) {
-        if(encode != null && decode != null) {
-            return;
-        }
-        encode = new NettyEncoder(config.getEncoder());
-        decode = new NettyDecoder(config.getDecoder());
     }
 
     private void initEventLoopGroup(RemotingServerConfiguration config) {

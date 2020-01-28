@@ -2,7 +2,7 @@ package cloud.tianai.rpc.core.server.impl;
 
 
 import cloud.tianai.rpc.core.server.RpcServer;
-import cloud.tianai.rpc.core.server.constant.RpcServerConfigConstant;
+import cloud.tianai.rpc.core.constant.RpcServerConfigConstant;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;

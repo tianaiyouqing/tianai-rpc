@@ -4,12 +4,16 @@ import cloud.tianai.remoting.api.RemotingDataProcessor;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
 
 /**
  * @Author: 天爱有情
  * @Date: 2020/01/05 21:45
  * @Description: Netty Handler
  */
+@Slf4j
 public class NettyHandler extends ChannelDuplexHandler {
     private RemotingDataProcessor remotingDataProcessor;
 
@@ -43,7 +47,11 @@ public class NettyHandler extends ChannelDuplexHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        cause.printStackTrace();
+        if(cause instanceof IOException) {
+            log.warn("netty IO异常: e=" + cause.getMessage());
+        }else {
+            cause.printStackTrace();
+        }
         ctx.close();
         super.exceptionCaught(ctx, cause);
     }

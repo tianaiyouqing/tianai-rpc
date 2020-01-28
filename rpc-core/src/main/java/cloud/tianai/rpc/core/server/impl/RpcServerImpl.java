@@ -5,40 +5,52 @@ import cloud.tianai.rpc.common.KeyValue;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.ClassUtils;
+import cloud.tianai.rpc.core.constant.RpcConfigConstant;
 import cloud.tianai.rpc.core.server.RpcServer;
-import cloud.tianai.rpc.core.server.constant.RpcServerConfigConstant;
-import cloud.tianai.rpc.core.server.remoting.CodecFactory;
-import cloud.tianai.rpc.core.server.remoting.RegistryFactory;
-import cloud.tianai.rpc.core.server.remoting.RemotingServerFactory;
+import cloud.tianai.rpc.core.constant.RpcServerConfigConstant;
+import cloud.tianai.rpc.core.factory.CodecFactory;
+import cloud.tianai.rpc.core.factory.RegistryFactory;
+import cloud.tianai.rpc.core.factory.RemotingServerFactory;
 import cloud.tianai.rpc.registory.api.Registry;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import org.apache.commons.lang3.StringUtils;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
+/**
+ * @Author: 天爱有情
+ * @Date: 2020/01/28 11:27
+ * @Description: rpc server实现
+ */
 public class RpcServerImpl implements RpcServer, RpcInvocation {
 
     /** 是否启动. */
     private AtomicBoolean start = new AtomicBoolean(false);
-
+    /** ip. */
     private String host;
+    /** 端口. */
     private Integer port;
 
+    /** 远程Server. */
     private RemotingServer remotingServer;
+    /** 远程管道持有. */
     private RemotingChannelHolder remotingChannelHolder;
+    /** 远程server配置. */
     private RemotingServerConfiguration remotingServerConfiguration;
-
+    /** 服务注册. */
     private Registry registry;
 
-    private Map<Class<?>, Object> objectMap = new HashMap<>();
+    /** 注册rpc对象  接口Class -> 对应实现. */
+    private Map<Class<?>, Object> objectMap = new ConcurrentHashMap<>(256);
+
 
     @Override
     public void start(Properties prop) throws RpcException {
@@ -51,29 +63,40 @@ public class RpcServerImpl implements RpcServer, RpcInvocation {
         startRegistry(prop);
     }
 
+    /**
+     * 启动服务注册
+     * @param prop 启动时所需参数
+     */
     private void startRegistry(Properties prop) {
-        String registryProtocol = prop.getProperty(RpcServerConfigConstant.REGISTER, RpcServerConfigConstant.DEFAULT_REGISTER);
-        Registry registry = RegistryFactory.getRegistry(registryProtocol);
+        URL registryUrl = readRegistryConfiguration(prop);
+        registry = RegistryFactory.getRegistry(registryUrl);
         if(registry == null) {
-            throw new RpcException("未找到对应的注册工厂, protocol=" + registryProtocol);
+            throw new RpcException("未找到对应的注册工厂, protocol=" + registryUrl.getProtocol());
         }
-
-        URL registryUrl = readRegistryConfiguration(registryProtocol, prop);
-        this.registry = registry.start(registryUrl);
+//        this.registry = registry.start(registryUrl);
     }
 
-    private URL readRegistryConfiguration(String registryProtocol , Properties prop) {
+    /**
+     * 通过 properties读取到 服务注册对应的参数
+     * @param prop
+     * @return
+     */
+    private URL readRegistryConfiguration(Properties prop) {
         String registerHost = prop.getProperty(RpcServerConfigConstant.REGISTRY_HOST, "127.0.0.1");
         String portStr = prop.getProperty(RpcServerConfigConstant.REGISTRY_PORT);
+        String registryProtocol = prop.getProperty(RpcServerConfigConstant.REGISTER, RpcServerConfigConstant.DEFAULT_REGISTER);
         Integer registerPort = null;
         if(StringUtils.isNoneBlank(portStr)) {
             registerPort = Integer.valueOf(portStr);
         }
-
         URL url = new URL(registryProtocol, registerHost, registerPort);
         return url;
     }
 
+    /**
+     * 启动远程 server
+     * @param prop
+     */
     private void startRemotingServer(Properties prop) {
         // 创建远程server
         String protocol = prop.getProperty(RpcServerConfigConstant.PROTOCOL, RpcServerConfigConstant.DEFAULT_PROTOCOL);
@@ -88,12 +111,17 @@ public class RpcServerImpl implements RpcServer, RpcInvocation {
         remotingChannelHolder = remotingServer.start(conf);
     }
 
+    /**
+     * 读取远程server配置信息
+     * @param prop
+     * @return
+     */
     private RemotingServerConfiguration readRemotingServerConfiguration(Properties prop) {
         RemotingServerConfiguration configuration = new RemotingServerConfiguration();
 
         String host = prop.getProperty(RpcServerConfigConstant.HOST, "127.0.0.1");
         Integer port = Integer.valueOf(prop.getProperty(RpcServerConfigConstant.PORT, String.valueOf(20880)));
-        Integer workerThreads = Integer.valueOf(prop.getProperty(RpcServerConfigConstant.WORKER_THREADS, String.valueOf(12)));
+        Integer workerThreads = Integer.valueOf(prop.getProperty(RpcServerConfigConstant.WORKER_THREADS, String.valueOf(RpcConfigConstant.DEFAULT_IO_THREADS)));
         Integer bossThreads = Integer.valueOf(prop.getProperty(RpcServerConfigConstant.BOSS_THREADS, String.valueOf(1)));
         Integer timeout = Integer.valueOf(prop.getProperty(RpcServerConfigConstant.TIMEOUT, String.valueOf(5000)));
         String codecProtocol = prop.getProperty(RpcServerConfigConstant.CODEC, RpcServerConfigConstant.DEFAULT_CODEC);
@@ -115,6 +143,12 @@ public class RpcServerImpl implements RpcServer, RpcInvocation {
         return configuration;
     }
 
+    /**
+     * 注册
+     * @param interfaceClazz 注册的接口
+     * @param ref 对应接口的实现
+     * @param <T>
+     */
     @Override
     public <T> void register(Class<T> interfaceClazz, T ref) {
         URL url = new URL(remotingServer.getRemotingType(),

@@ -22,13 +22,21 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
 
     private Response processRequest(Request request) {
         Request copyReq = Request.copyRequest(request);
-        try {
-            Object result = rpcInvocation.invoke(copyReq);
-            return warpResponse(result, request);
-        } catch (Throwable e) {
-            // 异常
-            return warpResponse(e, request);
+        Object result;
+        if(request.isHeartbeat()) {
+            // 如果是心跳请求，直接返回
+            result = "heartbeat success";
+        }else {
+            try {
+                result = rpcInvocation.invoke(copyReq);
+            } catch (Throwable e) {
+                // 打印堆栈信息
+                e.printStackTrace();
+                // 异常
+                return warpResponse(e, request);
+            }
         }
+        return warpResponse(result, request);
     }
 
     private Response warpResponse(Throwable e, Request request) {
