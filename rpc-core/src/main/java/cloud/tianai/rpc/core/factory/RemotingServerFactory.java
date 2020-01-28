@@ -1,12 +1,9 @@
 package cloud.tianai.rpc.core.factory;
 
 import cloud.tianai.remoting.api.RemotingServer;
-import cloud.tianai.remoting.api.RemotingServerConfiguration;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.ClassUtils;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +16,7 @@ import java.util.Objects;
 public class RemotingServerFactory {
 
     private static Map<String, Class<? extends RemotingServer>> remotingServerMap = new HashMap<>(2);
+    private static final String SPLIT = ":";
 
     static {
         try {
@@ -27,6 +25,11 @@ public class RemotingServerFactory {
         } catch (ClassNotFoundException e) {
             // 不做处理
         }
+    }
+
+
+    private static String getKey(String protocol, String host, Integer port) {
+        return protocol.concat(SPLIT).concat(host).concat(SPLIT).concat(String.valueOf(port));
     }
 
     public static RemotingServer create(String protocol) {

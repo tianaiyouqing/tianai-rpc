@@ -67,6 +67,15 @@ public class ZookeeperRegistry implements Registry {
         return this;
     }
 
+    @Override
+    public void shutdown() {
+        if(zkClient != null) {
+            zkClient.close();
+        }
+        notifyListenerZkDataListenerMap.clear();
+        start.set(false);
+    }
+
     private void init() {
         // todo zookeeperRegistry 这是暂时先设置为单机版
         String address = zookeeperUrl.getAddress();

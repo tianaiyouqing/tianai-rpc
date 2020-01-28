@@ -45,4 +45,9 @@ public interface Registry {
      * @param url
      */
     Registry start(URL url);
+
+    /**
+     * 关闭
+     */
+    void shutdown();
 }

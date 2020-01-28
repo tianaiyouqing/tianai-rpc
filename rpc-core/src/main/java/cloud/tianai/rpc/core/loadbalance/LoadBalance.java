@@ -1,8 +1,8 @@
 package cloud.tianai.rpc.core.loadbalance;
 
+import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.rpc.common.URL;
-import cloud.tianai.rpc.core.client.RpcClient;
 
 import java.util.List;
 
@@ -26,5 +26,5 @@ public interface LoadBalance {
      * @param request
      * @return
      */
-    RpcClient select(List<RpcClient> rpcClients, URL url, Request request);
+    RemotingClient select(List<RemotingClient> rpcClients, URL url, Request request);
 }

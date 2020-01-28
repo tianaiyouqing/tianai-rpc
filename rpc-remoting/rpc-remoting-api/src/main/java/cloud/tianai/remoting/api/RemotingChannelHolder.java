@@ -19,7 +19,7 @@ public interface RemotingChannelHolder {
      * 获取管道
      * @return 具体的管道实现
      */
-    Channel getNettyChannel();
+    Channel getChannel();
 
     /**
      * 发送消息

@@ -33,7 +33,7 @@ public class NettyRemotingChannelHolder implements RemotingChannelHolder  {
     }
 
     @Override
-    public cloud.tianai.remoting.api.Channel getNettyChannel() {
+    public cloud.tianai.remoting.api.Channel getChannel() {
         return channel;
     }
 

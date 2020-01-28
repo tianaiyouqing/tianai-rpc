@@ -1,6 +1,8 @@
 package cloud.tianai.remoting.netty;
 
 import cloud.tianai.remoting.api.Channel;
+import cloud.tianai.rpc.common.exception.RpcException;
+import io.netty.channel.ChannelFuture;
 
 import java.net.SocketAddress;
 
@@ -19,7 +21,7 @@ public class NettyChannelAdapter implements Channel {
 
     @Override
     public void write(Object obj) {
-        unsafe.writeAndFlush(obj);
+        ChannelFuture future = unsafe.writeAndFlush(obj);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package cloud.tianai.remoting.api;
 
+import cloud.tianai.rpc.common.util.IPUtils;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import lombok.Data;
@@ -12,11 +13,11 @@ import lombok.Data;
 @Data
 public class RemotingConfiguration {
     /** ip. */
-    private String host;
+    private String host = "127.0.0.1";
     /** 端口. */
-    private Integer port;
+    private Integer port = 20880;
     /** 工作线程数. */
-    private Integer workerThreads;
+    private Integer workerThreads = Math.min(Runtime.getRuntime().availableProcessors() + 1, 32);;
     /** 编码器. */
     private RemotingDataEncoder encoder;
     /** 解码器. */
@@ -24,5 +25,7 @@ public class RemotingConfiguration {
     /** 远程数据解析. */
     private RemotingDataProcessor remotingDataProcessor;
     /** 链接超时. */
-    private Integer connectTimeout;
+    private Integer connectTimeout = 5000;
+    /** 执行线程数. */
+    private Integer executeThreads = 200;
 }

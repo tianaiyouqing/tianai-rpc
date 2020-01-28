@@ -28,6 +28,7 @@ public class NettyClient extends AbstractRemotingClient {
 
     private Channel channel;
     private EventLoopGroup workerGroup;
+    private NettyRemotingChannelHolder channelHolder;
 
     @Override
     public RemotingChannelHolder doStart(RemotingConfiguration config) throws RpcRemotingException {
@@ -41,7 +42,8 @@ public class NettyClient extends AbstractRemotingClient {
         // 链接
         this.channel = connect(bs, config);
 
-        return NettyRemotingChannelHolder.create(this.channel);
+        channelHolder = NettyRemotingChannelHolder.create(this.channel);
+        return channelHolder;
     }
 
     private Channel connect(Bootstrap bs, RemotingConfiguration config) {
@@ -71,7 +73,7 @@ public class NettyClient extends AbstractRemotingClient {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast("Encoder", new NettyEncoder(config.getEncoder()));
                         pipeline.addLast("Decoder", new NettyDecoder(config.getDecoder()));
-                        pipeline.addLast("handler", new NettyHandler(config.getRemotingDataProcessor()));
+                        pipeline.addLast("handler", new NettyHandler(config.getExecuteThreads(), config.getExecuteThreads(), config.getRemotingDataProcessor()));
                     }
                 });
     }
@@ -88,7 +90,14 @@ public class NettyClient extends AbstractRemotingClient {
 
     @Override
     public void doStop() throws RpcRemotingException {
+        if(workerGroup != null) {
+            workerGroup.shutdownGracefully();
+        }
+    }
 
+    @Override
+    public RemotingChannelHolder getchannel() {
+        return channelHolder;
     }
 
     @Override

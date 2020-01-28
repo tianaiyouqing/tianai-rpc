@@ -1,6 +1,7 @@
 package cloud.tianai.remoting.api;
 
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
+import cloud.tianai.rpc.common.util.id.IdUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,11 +13,19 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
      */
     private AtomicBoolean start = new AtomicBoolean(false);
 
+    private String id;
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
     @Override
     public RemotingChannelHolder start(RemotingConfiguration config) throws RpcRemotingException {
         if (!start.compareAndSet(false, true)) {
             throw new RpcRemotingException("无需重复启动");
         }
+        this.id = IdUtils.getNoRepetitionIdStr();
         try {
             RemotingChannelHolder channelHolder = doStart(config);
             return channelHolder;

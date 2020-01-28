@@ -11,7 +11,7 @@ import lombok.Data;
 public class RemotingServerConfiguration extends RemotingConfiguration {
 
     /** 监听线程数. */
-    private Integer bossThreads;
+    private Integer bossThreads = 1;
     /** 心跳超时. */
-    private Integer idleTimeout;
+    private Integer idleTimeout = 3000;
 }

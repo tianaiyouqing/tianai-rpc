@@ -33,7 +33,7 @@ public class NettyServer extends AbstractRemotingServer {
     private EventLoopGroup workerGroup;
     private Channel channel;
     private InetSocketAddress address;
-
+    private NettyRemotingChannelHolder channelHolder;
     private RemotingServerConfiguration remotingServerConfiguration;
     @Override
     public RemotingChannelHolder doStart(RemotingServerConfiguration config) throws RpcRemotingException {
@@ -52,7 +52,7 @@ public class NettyServer extends AbstractRemotingServer {
         channelFuture.syncUninterruptibly();
         channel = channelFuture.channel();
 
-        NettyRemotingChannelHolder channelHolder = NettyRemotingChannelHolder.create(channel);
+        channelHolder = NettyRemotingChannelHolder.create(channel);
 
         this.remotingServerConfiguration = config;
         return channelHolder;
@@ -91,7 +91,9 @@ public class NettyServer extends AbstractRemotingServer {
                         pipeline.addLast("Decoder", new NettyDecoder(config.getDecoder()));
                         pipeline.addLast("server-idle-handler",
                                 new IdleStateHandler(0, 0, config.getIdleTimeout(), MILLISECONDS));
-                        pipeline.addLast("handler", new NettyHandler(config.getRemotingDataProcessor()));
+                        pipeline.addLast("handler", new NettyHandler(config.getExecuteThreads(),
+                                config.getExecuteThreads(),
+                                config.getRemotingDataProcessor()));
                     }
                 });
     }
@@ -118,6 +120,11 @@ public class NettyServer extends AbstractRemotingServer {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
+    }
+
+    @Override
+    public RemotingChannelHolder getchannel() {
+        return channelHolder;
     }
 
     @Override

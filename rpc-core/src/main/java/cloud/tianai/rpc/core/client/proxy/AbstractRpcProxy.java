@@ -1,21 +1,25 @@
 package cloud.tianai.rpc.core.client.proxy;
 
-import cloud.tianai.remoting.api.Request;
+import cloud.tianai.remoting.api.*;
+import cloud.tianai.rpc.common.KeyValue;
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.CollectionUtils;
-import cloud.tianai.rpc.core.client.RpcClient;
-import cloud.tianai.rpc.core.client.impl.RpcClientImpl;
 import cloud.tianai.rpc.core.constant.RpcClientConfigConstant;
+import cloud.tianai.rpc.core.constant.RpcConfigConstant;
 import cloud.tianai.rpc.core.constant.RpcServerConfigConstant;
 import cloud.tianai.rpc.core.factory.LoadBalanceFactory;
 import cloud.tianai.rpc.core.factory.RegistryFactory;
+import cloud.tianai.rpc.core.factory.RemotingClientFactory;
+import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
 import cloud.tianai.rpc.core.loadbalance.LoadBalance;
 import cloud.tianai.rpc.core.loadbalance.impl.RoundRobinLoadBalance;
 import cloud.tianai.rpc.registory.api.NotifyListener;
 import cloud.tianai.rpc.registory.api.Registry;
+import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
+import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Method;
@@ -24,16 +28,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import static cloud.tianai.rpc.core.factory.CodecFactory.getCodec;
+
 /**
  * @Author: 天爱有情
  * @Date: 2020/01/28 11:44
  * @Description: RPC代理对象
  */
 public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener {
-    /**
-     * 用户得以参数.
-     */
-    protected Properties prop;
     /**
      * 接口的class类型.
      */
@@ -61,6 +63,10 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
      */
     protected LoadBalance loadBalance;
 
+    protected Properties prop;
+
+    protected RemotingClient remotingClient;
+
     /***
      * 查看urls 并且订阅
      * @param url
@@ -79,17 +85,6 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         this.registry.subscribe(url, this);
     }
 
-    /**
-     * 启动RPC客户端
-     *
-     * @param url
-     * @return
-     */
-    public RpcClient startRpcClient(URL url) {
-        RpcClient rpcClient = new RpcClientImpl();
-        rpcClient.start(prop, url);
-        return rpcClient;
-    }
 
     /**
      * 创建代理
@@ -102,8 +97,8 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             // 如果不是接口，直接抛异常
             throw new IllegalArgumentException("创建rpc代理错误，class必须是接口");
         }
-        this.interfaceClass = interfaceClass;
         this.prop = prop;
+        this.interfaceClass = interfaceClass;
         this.url = new URL("tianai-rpc", "127.0.0.1", 0, interfaceClass.getName());
         if (!lazyLoadRegistry) {
             this.registry = startRegistry(prop);
@@ -152,7 +147,13 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             throw new IllegalArgumentException("无法读取到registry， 必须指定registry的protocol");
         }
         URL registryUrl = readRegistryConfiguration(prop);
-        Registry registry = RegistryFactory.getRegistry(registryUrl);
+
+        Registry registry = RegistryHolder.computeIfAbsent(registryUrl, () -> {
+            Registry r = RegistryFactory.createRegistry(registryUrl.getProtocol());
+            // 启动服务注册
+            r.start(registryUrl);
+            return r;
+        });
         return registry;
     }
 
@@ -202,56 +203,56 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
      * @param request
      * @return
      */
-    protected RpcClient loadBalance(Request request) {
+    protected RemotingClient loadBalance(Request request) {
         // 读取到注册到注册器中的url
         List<URL> urls = lookUpOfThrow();
         // 通过URL读取到对应的RpcClient
-        List<RpcClient> rpcClients = getRpcClients(urls);
+        List<RemotingClient> rpcClients = getRpcClients(urls);
         // 通过负载均衡器拉取RpcClient
-        RpcClient rpcClient = loadBalance.select(rpcClients, url, request);
+        RemotingClient rpcClient = loadBalance.select(rpcClients, url, request);
         return rpcClient;
     }
 
-    /**
-     * 通过URLs 读取到对应的 RpcClients
-     *
-     * @param urls
-     * @return
-     */
-    private List<RpcClient> getRpcClients(List<URL> urls) {
-        List<RpcClient> rpcClients = new ArrayList<>(urls.size());
+    private List<RemotingClient> getRpcClients(List<URL> urls) {
+        List<RemotingClient> result = new ArrayList<>(urls.size());
         for (URL u : urls) {
-            try {
-                rpcClients.add(getRpcClient(u));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            result.add(getRpcClient(u));
         }
-        return rpcClients;
+        return result;
     }
 
-    /**
-     * 读取RpcClient
-     *
-     * @param url
-     * @return
-     */
-    private RpcClient getRpcClient(URL url) {
-        String protocol = url.getProtocol();
-        String address = url.getAddress();
-        RpcClient rpcClient = RpcClientHolder.getRpcClient(protocol, address);
-        if (rpcClient != null) {
-            return rpcClient;
-        }
-        synchronized (RpcClientHolder.getLock(url.getProtocol(), url.getAddress())) {
-            rpcClient = RpcClientHolder.getRpcClient(protocol, address);
-            if (rpcClient == null) {
-                rpcClient = startRpcClient(url);
-                RpcClientHolder.putRpcClient(url.getProtocol(), url.getAddress(), rpcClient);
+
+    private RemotingClient getRpcClient(URL url) {
+        return RpcClientHolder.computeIfAbsent(url.getProtocol(), url.getAddress(), () -> {
+            String host = url.getHost();
+            if (StringUtils.isBlank(host)) {
+                throw new RpcException("客户端启动失败，必须指定host");
             }
-            return rpcClient;
-        }
+            Integer port = url.getPort();
+            int workThreads = Integer.parseInt(url.getParameter(RpcClientConfigConstant.WORKER_THREADS, String.valueOf(RpcConfigConstant.DEFAULT_IO_THREADS)));
+
+            String codecProtocol = prop.getProperty(RpcClientConfigConstant.CODEC, RpcClientConfigConstant.DEFAULT_CODEC);
+            KeyValue<RemotingDataEncoder, RemotingDataDecoder> codec = getCodec(codecProtocol);
+            if (codec == null || !codec.isNotEmpty()) {
+                throw new RpcException("未找到对应的codec， protocol=" + codecProtocol);
+            }
+            Integer timeout = Integer.valueOf(prop.getProperty(RpcClientConfigConstant.TIMEOUT, String.valueOf(5000)));
+            RemotingConfiguration conf = new RemotingConfiguration();
+            conf.setHost(host);
+            conf.setPort(port);
+            conf.setWorkerThreads(workThreads);
+            conf.setEncoder(codec.getKey());
+            conf.setDecoder(codec.getValue());
+            conf.setConnectTimeout(timeout);
+            conf.setRemotingDataProcessor(new RequestResponseRemotingDataProcessor(new HeartbeatRpcInvocation()));
+            String client = prop.getProperty(RpcClientConfigConstant.PROTOCOL, RpcClientConfigConstant.DEFAULT_PROTOCOL);
+            RemotingClient c = RemotingClientFactory.create(client);
+            // 启动客户端
+            c.start(conf);
+            return c;
+        });
     }
+
 
     protected Request warpRequest(Object proxy, Method method, Object[] args) {
         Request request = new Request();
@@ -272,5 +273,16 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             throw new RpcException("注册器中无法读取到该URL [" + this.url + "] 对应的注册地址");
         }
         return subscribeUrls;
+    }
+
+    public static class HeartbeatRpcInvocation implements RpcInvocation {
+
+        @Override
+        public Object invoke(Request request) {
+            if (request.isHeartbeat()) {
+                return "heartbeat success";
+            }
+            return null;
+        }
     }
 }

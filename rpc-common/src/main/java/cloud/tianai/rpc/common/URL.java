@@ -10,6 +10,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -32,42 +33,42 @@ public final class URL implements Serializable {
     /**
      * 协议.
      */
-    private final String protocol;
+    private String protocol;
 
     /**
      * 用户名.
      */
-    private final String username;
+    private String username;
 
     /**
      * 密码.
      */
-    private final String password;
+    private  String password;
 
     /**
      * ip地址.
      */
-    private final String host;
+    private String host;
 
     /**
      * 端口.
      */
-    private final int port;
+    private int port;
 
     /**
      * 路径.
      */
-    private final String path;
+    private String path;
 
     /**
      * 参数.
      */
-    private final Map<String, String> parameters;
+    private Map<String, String> parameters;
 
     /**
      * 方法参数.
      */
-    private final Map<String, Map<String, String>> methodParameters;
+    private Map<String, Map<String, String>> methodParameters;
 
     // ==== cache ====
 
@@ -89,15 +90,15 @@ public final class URL implements Serializable {
 
     private transient String serviceKey;
 
-    protected URL() {
+    public URL() {
         this.protocol = null;
         this.username = null;
         this.password = null;
         this.host = null;
         this.port = 0;
         this.path = null;
-        this.parameters = null;
-        this.methodParameters = null;
+        this.parameters = new ConcurrentHashMap<>(16);
+        this.methodParameters = new ConcurrentHashMap<>(16);
     }
 
     public URL(String protocol, String host, int port) {

@@ -24,7 +24,6 @@ public class CodecFactory {
     private static Map<String, KeyValue<Class<? extends RemotingDataEncoder>, Class<? extends RemotingDataDecoder>>> codecClassMap
             = new HashMap<>(2);
 
-
     static {
         // 注册一些默认的codec
         try {

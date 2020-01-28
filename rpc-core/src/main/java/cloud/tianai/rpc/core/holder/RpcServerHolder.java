@@ -1,6 +1,6 @@
 package cloud.tianai.rpc.core.holder;
 
-import cloud.tianai.remoting.api.RemotingClient;
+import cloud.tianai.remoting.api.RemotingServer;
 
 import java.util.Map;
 import java.util.Objects;
@@ -9,24 +9,21 @@ import java.util.function.Supplier;
 
 /**
  * @Author: 天爱有情
- * @Date: 2020/01/28 11:34
- * @Description: RPC客户端持有者
+ * @Date: 2020/01/28 18:09
+ * @Description: RPCServer持有者
  */
-public class RpcClientHolder {
-
+public class RpcServerHolder {
     private static final String SPLIT = ":";
 
     /**
      * (protocol:address) -> RpcClient.
      */
-    private static Map<String, RemotingClient> rpcClientMap = new ConcurrentHashMap<>(32);
+    private static Map<String, RemotingServer> rpcServerMap = new ConcurrentHashMap<>(32);
     private static Map<String, Lock> lockMap = new ConcurrentHashMap<>(32);
 
     static {
-        // 注册关闭钩子
-        Runtime.getRuntime().addShutdownHook(new Thread(RpcClientHolder::shutdown));
+        Runtime.getRuntime().addShutdownHook(new Thread(RpcServerHolder :: shutdown));
     }
-
 
     public static Lock getLock(String protocol, String address) {
         Lock lock = lockMap.computeIfAbsent(getKey(protocol, address), (k) -> {
@@ -37,6 +34,7 @@ public class RpcClientHolder {
         return lock;
     }
 
+
     /**
      * 获取RpcClient如果存在
      *
@@ -44,22 +42,26 @@ public class RpcClientHolder {
      * @param address
      * @return
      */
-    public static RemotingClient getRpcClient(String protocol, String address) {
-        return rpcClientMap.get(getKey(protocol, address));
+    public static RemotingServer getRpcServer(String protocol, String address) {
+        return rpcServerMap.get(getKey(protocol, address));
     }
 
-    public static RemotingClient computeIfAbsent(String protocol, String address, Supplier<RemotingClient> supplier) {
-        RemotingClient rpcClient = getRpcClient(protocol, address);
-        if (rpcClient == null) {
+    private static String getKey(String protocol, String address) {
+        return protocol.concat(SPLIT).concat(address);
+    }
+
+    public static RemotingServer computeIfAbsent(String protocol, String address, Supplier<RemotingServer> supplier) {
+        RemotingServer rpcServer = getRpcServer(protocol, address);
+        if (rpcServer == null) {
             Lock lock = getLock(protocol, address);
             synchronized (lock) {
-                if ((rpcClient = getRpcClient(protocol, address)) == null) {
-                    rpcClient = supplier.get();
-                    putRpcClient(protocol, address, rpcClient);
+                if ((rpcServer = getRpcServer(protocol, address)) == null) {
+                    rpcServer = supplier.get();
+                    putRpcServer(protocol, address, rpcServer);
                 }
             }
         }
-        return rpcClient;
+        return rpcServer;
     }
 
 
@@ -68,31 +70,15 @@ public class RpcClientHolder {
      *
      * @param protocol
      * @param address
-     * @param rpcClient
+     * @param rpcServer
      */
-    public static void putRpcClient(String protocol, String address, RemotingClient rpcClient) {
+    public static void putRpcServer(String protocol, String address, RemotingServer rpcServer) {
         String key = getKey(protocol, address);
-        RemotingClient oldRpcClient = rpcClientMap.remove(key);
-        rpcClientMap.put(key, rpcClient);
-        if (oldRpcClient != null) {
-            oldRpcClient.stop();
-        }
-    }
+        RemotingServer oldRpcServer = rpcServerMap.remove(key);
+        rpcServerMap.put(key, rpcServer);
 
-    public static void removeRpcClient(String key) {
-        RemotingClient rpcClient = rpcClientMap.remove(key);
-        if (rpcClient != null) {
-            rpcClient.stop();
-        }
-    }
-
-    public static String getKey(String protocol, String address) {
-        return protocol.concat(SPLIT).concat(address);
-    }
-
-    public static void shutdown() {
-        for (String key : rpcClientMap.keySet()) {
-            removeRpcClient(key);
+        if (oldRpcServer != null) {
+            oldRpcServer.stop();
         }
     }
 
@@ -102,10 +88,27 @@ public class RpcClientHolder {
      * @param protocol
      * @param address
      */
-    public static void removeRpcClient(String protocol, String address) {
+    public static void removeRpcServer(String protocol, String address) {
         String key = getKey(protocol, address);
-        removeRpcClient(key);
+        RemotingServer rpcServer = rpcServerMap.remove(key);
+        if (rpcServer != null) {
+            rpcServer.stop();
+        }
     }
+
+    public static void removeRpcServer(String key) {
+        RemotingServer rpcServer = rpcServerMap.remove(key);
+        if (rpcServer != null) {
+            rpcServer.stop();
+        }
+    }
+
+    public static void shutdown() {
+        for (String key : rpcServerMap.keySet()) {
+            removeRpcServer(key);
+        }
+    }
+
 
     public static class Lock {
         private String protocol;

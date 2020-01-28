@@ -16,9 +16,9 @@
  */
 package cloud.tianai.rpc.core.loadbalance.impl;
 
+import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.rpc.common.URL;
-import cloud.tianai.rpc.core.client.RpcClient;
 import cloud.tianai.rpc.core.loadbalance.LoadBalance;
 
 import java.util.List;
@@ -47,12 +47,12 @@ public class RoundRobinLoadBalance implements LoadBalance {
     }
 
     @Override
-    public RpcClient select(List<RpcClient> rpcClients, URL url, Request request) {
+    public RemotingClient select(List<RemotingClient> rpcClients, URL url, Request request) {
         if (rpcClients.size() == 1) {
             // 如果只有一个，直接返回
             return rpcClients.get(0);
         }
-        String key = request.getInterfaceType().getName() +"." + request.getMethodName();
+        String key = request.getInterfaceType().getName() + "." + request.getMethodName();
         ConcurrentMap<String, WeightedRoundRobin> map = methodWeightMap.get(key);
         if (map == null) {
             methodWeightMap.putIfAbsent(key, new ConcurrentHashMap<String, WeightedRoundRobin>(16));
@@ -62,20 +62,20 @@ public class RoundRobinLoadBalance implements LoadBalance {
         int totalWeight = 0;
         long maxCurrent = Long.MIN_VALUE;
         long now = System.currentTimeMillis();
-        RpcClient selectedRpcClient = null;
+        RemotingClient selectedRpcClient = null;
         WeightedRoundRobin selectedWrr = null;
 
-        for (RpcClient rpcClient : rpcClients) {
+        for (RemotingClient rpcClient : rpcClients) {
             String id = rpcClient.getId();
             WeightedRoundRobin weightedRoundRobin = map.get(id);
-            if(weightedRoundRobin == null) {
+            if (weightedRoundRobin == null) {
                 weightedRoundRobin = new WeightedRoundRobin();
                 weightedRoundRobin.setWeight(100);
                 map.putIfAbsent(id, weightedRoundRobin);
             }
             long cur = weightedRoundRobin.increaseCurrent();
             weightedRoundRobin.setLastUpdate(now);
-            if(cur > maxCurrent) {
+            if (cur > maxCurrent) {
                 maxCurrent = cur;
                 selectedRpcClient = rpcClient;
                 selectedWrr = weightedRoundRobin;

@@ -1,15 +1,17 @@
 package cloud.tianai.rpc.core.client.proxy.impl;
 
+import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.remoting.api.Response;
 import cloud.tianai.rpc.common.exception.RpcException;
-import cloud.tianai.rpc.core.client.RpcClient;
 import cloud.tianai.rpc.core.client.proxy.AbstractRpcProxy;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: 天爱有情
@@ -46,8 +48,17 @@ public class JdkRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHan
         // 懒加载 registry
         startRegistryIfNecessary(super.prop);
         // 通过负载均衡读取到对应的rpcClient
-        RpcClient rpcClient = loadBalance(request);
-        Response response = rpcClient.request(request, super.requestTimeout);
+        RemotingClient rpcClient = loadBalance(request);
+        CompletableFuture<Object> future = rpcClient.getchannel().request(request, super.requestTimeout);
+        Object resObj = future.get(super.requestTimeout, TimeUnit.MILLISECONDS);
+        Response response;
+        if (resObj instanceof Response) {
+            response = (Response) resObj;
+        } else {
+            response = new Response(request.getId());
+            response.setResult(resObj);
+            response.setStatus(Response.OK);
+        }
         if (Response.OK == response.getStatus()) {
             // 如果是ok，直接返回
             return response.getResult();
