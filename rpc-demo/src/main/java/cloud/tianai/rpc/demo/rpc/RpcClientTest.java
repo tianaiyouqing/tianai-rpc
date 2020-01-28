@@ -20,10 +20,8 @@ public class RpcClientTest {
         prop.setProperty(RpcClientConfigConstant.REGISTRY_HOST, "192.168.1.6");
         prop.setProperty(RpcClientConfigConstant.REGISTRY_PORT, String.valueOf(2181));
 
-        // 远程 server
+        // 远程 客户端
         prop.setProperty(RpcClientConfigConstant.PROTOCOL, "netty");
-        prop.setProperty(RpcClientConfigConstant.HOST, "127.0.0.1");
-        prop.setProperty(RpcClientConfigConstant.PORT, String.valueOf(20881));
         prop.setProperty(RpcClientConfigConstant.WORKER_THREADS, String.valueOf(1));
         prop.setProperty(RpcClientConfigConstant.REQUEST_TIMEOUT, String.valueOf(3000));
         RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();

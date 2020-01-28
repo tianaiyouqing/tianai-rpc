@@ -76,7 +76,7 @@ public class RpcClientTest {
         prop.setProperty(RpcClientConfigConstant.REGISTRY_HOST, "192.168.1.6");
         prop.setProperty(RpcClientConfigConstant.REGISTRY_PORT, String.valueOf(2181));
 
-        // 远程 server
+        // 远程客户端，默认netty
         prop.setProperty(RpcClientConfigConstant.PROTOCOL, "netty");
         // 工作线程，默认cpu核心数+1
         prop.setProperty(RpcClientConfigConstant.WORKER_THREADS, String.valueOf(1));
