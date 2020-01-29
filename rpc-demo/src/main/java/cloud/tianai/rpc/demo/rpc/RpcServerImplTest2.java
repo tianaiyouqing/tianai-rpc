@@ -19,9 +19,10 @@ public class RpcServerImplTest2 {
                     .registry(new URL("zookeeper", "127.0.0.1", 2181))
                     .server("netty")
                     .port(20881)
+                    .register(Demo.class, new DemoImpl())
+                    .register(Demo2.class, new DemoImpl2())
                     .start();
             // 注册
-            serverBootstrap.register(Demo.class, new DemoImpl());
             System.out.println("启动成功");
         }).start();
 

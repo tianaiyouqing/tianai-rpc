@@ -3,10 +3,13 @@ package cloud.tianai.rpc.demo.rpc;
 import cloud.tianai.rpc.core.client.proxy.RpcProxy;
 import cloud.tianai.rpc.core.client.proxy.impl.JdkRpcProxy;
 import cloud.tianai.rpc.core.constant.RpcClientConfigConstant;
+import com.sun.xml.internal.ws.util.StreamUtils;
 
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 public class RpcClientTest {
 
@@ -27,19 +30,33 @@ public class RpcClientTest {
         prop.setProperty(RpcClientConfigConstant.TIMEOUT, String.valueOf(3000));
         RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();
         Demo proxy = rpcProxy.createProxy(Demo.class, prop, true, true);
-        for (int i1 = 0; i1 < 50; i1++) {
-            new Thread(() -> {
-                for (int i2 = 0; i2 < 20; i2++) {
-                    if (new Random().nextInt() % 2 ==0) {
-                        String res = proxy.sayHello();
-                        System.out.println("rpc调用返回数据:" + res);
-                    }else{
-                        DemoRes demoRes = proxy.helloRpc();
-                        System.out.println("rpc调用返回:" + demoRes);
-                    }
-                }
-            }).start();
-        }
+//        for (int i1 = 0; i1 < 1000; i1++) {
+//            new Thread(() -> {
+//                for (int i2 = 0; i2 < 20; i2++) {
+//                    if (new Random().nextInt() % 2 ==0) {
+//                        String res = proxy.sayHello();
+//                        System.out.println("rpc调用返回数据:" + res);
+//                    }else{
+//                        DemoRes demoRes = proxy.helloRpc();
+//                        System.out.println("rpc调用返回:" + demoRes);
+//                    }
+//                }
+//            }).start();
+//        }
+
+        RpcProxy<Demo2> rpcProxy2= new JdkRpcProxy<>();
+        Demo2 proxy2 = rpcProxy2.createProxy(Demo2.class, prop, true, true);
+
+        IntStream.range(0,1000).parallel().forEach(i -> {
+            DemoRes demoRes;
+            if (new Random().nextInt() % 2 ==0) {
+                demoRes = proxy.helloRpc();
+            }else{
+                 demoRes = proxy2.helloRpc2();
+            }
+            System.out.println("rpc调用返回:" + demoRes);
+        });
+
 //
 //        DemoRes demoRes = proxy.helloRpc();
 //        System.out.println("返回数据:" + demoRes);

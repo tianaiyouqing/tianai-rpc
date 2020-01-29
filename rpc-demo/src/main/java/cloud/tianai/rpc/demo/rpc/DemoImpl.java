@@ -28,7 +28,7 @@ public class DemoImpl implements Demo, Serializable {
         DemoRes demoRes = new DemoRes();
         demoRes.setId(IdUtils.getNoRepetitionIdStr());
         demoRes.setData("hello im tianai-rpc");
-        System.out.println("返回数据");
+        System.out.println("返回数据, 1 -> threadName:" + Thread.currentThread().getName());
         return demoRes;
     }
 }

@@ -16,6 +16,10 @@ public class DefaultRpcInvocation implements RpcInvocation {
         objectMap.put(interfaceClass, ref);
     }
 
+    public Map<Class<?>, Object> getObjectMap() {
+        return objectMap;
+    }
+
     @Override
     public Object invoke(Request request) {
         Class<?> interfaceType = request.getInterfaceType();

@@ -6,7 +6,6 @@ import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.IPUtils;
 import cloud.tianai.rpc.core.factory.CodecFactory;
-import cloud.tianai.rpc.core.factory.RegistryFactory;
 import cloud.tianai.rpc.core.factory.RemotingServerFactory;
 import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcServerHolder;
@@ -17,8 +16,10 @@ import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -47,6 +48,7 @@ public class ServerBootstrap {
     private AtomicBoolean start = new AtomicBoolean(false);
 
     private DefaultRpcInvocation rpcInvocation = new DefaultRpcInvocation();
+    Map<Class<?>, Object> temporaryObjectMap = new ConcurrentHashMap<>(256);
 
     public ServerBootstrap server(String server) {
         this.server = server;
@@ -103,6 +105,12 @@ public class ServerBootstrap {
         startRemotingServer();
         // 启动远程注册器
         startRegistry();
+        // 设置为不可变的map
+        temporaryObjectMap = Collections.unmodifiableMap(temporaryObjectMap);
+        // 把临时ObjectMap放入registry中
+        if (temporaryObjectMap.size() > 0) {
+            temporaryObjectMap.forEach(this::register);
+        }
     }
 
     public RemotingChannelHolder getChannel() {
@@ -112,9 +120,11 @@ public class ServerBootstrap {
         return remotingServer.getchannel();
     }
 
-    public <T> void register(Class<T> interfaceClazz, T ref) {
+    public ServerBootstrap register(Class<?> interfaceClazz, Object ref) {
         if (!isStart()) {
-            throw new RpcException("必须先执行 start() 方法");
+            // 没有启动的话，先存放到临时文件中
+            temporaryObjectMap.put(interfaceClazz, ref);
+            return this;
         }
         URL url = new URL(remotingServer.getRemotingType(),
                 prop.getHost(),
@@ -123,6 +133,7 @@ public class ServerBootstrap {
 
         registry.register(url);
         rpcInvocation.put(interfaceClazz, ref);
+        return this;
     }
 
     public boolean isStart() {
