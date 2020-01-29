@@ -23,26 +23,26 @@ public class RpcClientTest {
 
         // 远程 客户端
         prop.setProperty(RpcClientConfigConstant.PROTOCOL, "netty");
-        prop.setProperty(RpcClientConfigConstant.REQUEST_TIMEOUT, String.valueOf(3000));
+        prop.setProperty(RpcClientConfigConstant.REQUEST_TIMEOUT, String.valueOf(30000));
         prop.setProperty(RpcClientConfigConstant.TIMEOUT, String.valueOf(3000));
         RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();
         Demo proxy = rpcProxy.createProxy(Demo.class, prop, true, true);
-//        for (int i1 = 0; i1 < 1000; i1++) {
-//            new Thread(() -> {
-//                for (int i2 = 0; i2 < 20; i2++) {
-//                    if (new Random().nextInt() % 2 ==0) {
-//                        String res = proxy.sayHello();
-//                        System.out.println("rpc调用返回数据:" + res);
-//                    }else{
-//                        DemoRes demoRes = proxy.helloRpc();
-//                        System.out.println("rpc调用返回:" + demoRes);
-//                    }
-//                }
-//            }).start();
-//        }
-
-        DemoRes demoRes = proxy.helloRpc();
-        System.out.println("返回数据:" + demoRes);
+        for (int i1 = 0; i1 < 50; i1++) {
+            new Thread(() -> {
+                for (int i2 = 0; i2 < 20; i2++) {
+                    if (new Random().nextInt() % 2 ==0) {
+                        String res = proxy.sayHello();
+                        System.out.println("rpc调用返回数据:" + res);
+                    }else{
+                        DemoRes demoRes = proxy.helloRpc();
+                        System.out.println("rpc调用返回:" + demoRes);
+                    }
+                }
+            }).start();
+        }
+//
+//        DemoRes demoRes = proxy.helloRpc();
+//        System.out.println("返回数据:" + demoRes);
 
         TimeUnit.HOURS.sleep(1);
     }

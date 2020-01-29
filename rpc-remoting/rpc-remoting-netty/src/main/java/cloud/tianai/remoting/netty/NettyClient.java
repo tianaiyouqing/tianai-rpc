@@ -73,7 +73,8 @@ public class NettyClient extends AbstractRemotingClient {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast("Encoder", new NettyEncoder(config.getEncoder()));
                         pipeline.addLast("Decoder", new NettyDecoder(config.getDecoder()));
-                        pipeline.addLast("handler", new NettyHandler(config.getExecuteThreads(), config.getExecuteThreads(), config.getRemotingDataProcessor()));
+                        // 客户端调用不需要用线程池
+                        pipeline.addLast("handler", new NettyHandler(null, config.getRemotingDataProcessor()));
                     }
                 });
     }

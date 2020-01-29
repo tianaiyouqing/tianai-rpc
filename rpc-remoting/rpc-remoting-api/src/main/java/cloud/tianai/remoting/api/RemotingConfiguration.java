@@ -5,6 +5,8 @@ import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import lombok.Data;
 
+import java.util.concurrent.ExecutorService;
+
 /**
  * @Author: 天爱有情
  * @Date: 2020/01/05 12:35
@@ -26,6 +28,6 @@ public class RemotingConfiguration {
     private RemotingDataProcessor remotingDataProcessor;
     /** 链接超时. */
     private Integer connectTimeout = 5000;
-    /** 执行线程数. */
-    private Integer executeThreads = 200;
+    /** 工作线程池. */
+    private ExecutorService threadPool;;
 }

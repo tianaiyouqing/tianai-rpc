@@ -1,7 +1,6 @@
 package cloud.tianai.remoting.netty;
 
 import cloud.tianai.remoting.api.RemotingDataProcessor;
-import cloud.tianai.rpc.common.threadpool.NamedThreadFactory;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -9,9 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: 天爱有情
@@ -22,18 +18,11 @@ import java.util.concurrent.TimeUnit;
 public class NettyHandler extends ChannelDuplexHandler {
     private RemotingDataProcessor remotingDataProcessor;
     ExecutorService executorService;
-    ;
 
-    public NettyHandler(int corePoolSize,
-                        int maximumPoolSize, RemotingDataProcessor remotingDataProcessor) {
+    public NettyHandler(ExecutorService executorService,
+                        RemotingDataProcessor remotingDataProcessor) {
+        this.executorService = executorService;
         this.remotingDataProcessor = remotingDataProcessor;
-        executorService = new ThreadPoolExecutor(corePoolSize,
-                maximumPoolSize,
-                0,
-                TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(1024),
-                new NamedThreadFactory("tianai-rpc", true),
-                new ThreadPoolExecutor.AbortPolicy());
     }
 
     @Override
@@ -43,7 +32,12 @@ public class NettyHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        executorService.execute(new NettyRunnable(ctx, msg, remotingDataProcessor));
+        if(executorService != null) {
+            executorService.execute(new NettyRunnable(ctx, msg, remotingDataProcessor));
+        }else {
+            // 当前线程执行
+            new NettyRunnable(ctx, msg, remotingDataProcessor).run();
+        }
     }
 
     @Override

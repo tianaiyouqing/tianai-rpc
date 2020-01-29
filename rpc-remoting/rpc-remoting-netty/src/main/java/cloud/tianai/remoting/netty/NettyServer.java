@@ -1,11 +1,13 @@
 package cloud.tianai.remoting.netty;
 
-import cloud.tianai.remoting.api.*;
+import cloud.tianai.remoting.api.AbstractRemotingServer;
+import cloud.tianai.remoting.api.RemotingChannelHolder;
+import cloud.tianai.remoting.api.RemotingServerConfiguration;
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
+import cloud.tianai.rpc.common.threadpool.NamedThreadFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
-import io.netty.channel.Channel;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
@@ -16,9 +18,11 @@ import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-import java.net.Inet4Address;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -38,11 +42,16 @@ public class NettyServer extends AbstractRemotingServer {
     private InetSocketAddress address;
     private NettyRemotingChannelHolder channelHolder;
     private RemotingServerConfiguration remotingServerConfiguration;
+    // 线程池
+    ExecutorService threadPool;
 
     @Override
     public RemotingChannelHolder doStart(RemotingServerConfiguration config) throws RpcRemotingException {
 
         ServerBootstrap serverBootstrap = new ServerBootstrap();
+
+        // 创建工作线程池，如果有必要
+        initThreadLocal(config);
 
         // 创建eventLoopGroup
         initEventLoopGroup(config);
@@ -57,14 +66,29 @@ public class NettyServer extends AbstractRemotingServer {
         if (channelFuture.isSuccess()) {
             if (log.isInfoEnabled()) {
                 log.info("[tianai-rpc] - Netty start, address[{}]", channelFuture.channel().localAddress());
-            }else {
-                System.out.println("[tianai-rpc] - Netty start, address["+ channelFuture.channel().localAddress() +"]");
+            } else {
+                System.out.println("[tianai-rpc] - Netty start, address[" + channelFuture.channel().localAddress() + "]");
             }
         }
         channel = channelFuture.channel();
         channelHolder = NettyRemotingChannelHolder.create(channel);
         this.remotingServerConfiguration = config;
         return channelHolder;
+    }
+
+    private void initThreadLocal(RemotingServerConfiguration config) {
+        if (config.getThreadPool() != null) {
+            this.threadPool = config.getThreadPool();
+        } else {
+            // 创建默认线程池
+            this.threadPool = new ThreadPoolExecutor(200,
+                    200,
+                    0,
+                    TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<Runnable>(1024),
+                    new NamedThreadFactory("tianai-rpc", true),
+                    new ThreadPoolExecutor.AbortPolicy());
+        }
     }
 
 
@@ -98,9 +122,7 @@ public class NettyServer extends AbstractRemotingServer {
                         pipeline.addLast("Decoder", new NettyDecoder(config.getDecoder()));
                         pipeline.addLast("server-idle-handler",
                                 new IdleStateHandler(0, 0, config.getIdleTimeout(), MILLISECONDS));
-                        pipeline.addLast("handler", new NettyHandler(config.getExecuteThreads(),
-                                config.getExecuteThreads(),
-                                config.getRemotingDataProcessor()));
+                        pipeline.addLast("handler", new NettyHandler(threadPool, config.getRemotingDataProcessor()));
                     }
                 });
     }
