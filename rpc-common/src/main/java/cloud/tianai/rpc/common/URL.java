@@ -438,5 +438,15 @@ public final class URL implements Serializable {
     }
 
 
+    public Integer getParameter(String key, int defaultValue) {
+        String value = getParameter(key);
+        if(value != null) {
+            return Integer.parseInt(value);
+        }
+        return defaultValue;
+    }
 
+    public void addParameter(String key, String value) {
+        parameters.put(key, value);
+    }
 }

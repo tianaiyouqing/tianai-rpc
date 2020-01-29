@@ -5,6 +5,7 @@ import cloud.tianai.remoting.api.RemotingServer;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /**
@@ -50,13 +51,13 @@ public class RpcServerHolder {
         return protocol.concat(SPLIT).concat(address);
     }
 
-    public static RemotingServer computeIfAbsent(String protocol, String address, Supplier<RemotingServer> supplier) {
+    public static RemotingServer computeIfAbsent(String protocol, String address, BiFunction<String, String, RemotingServer> supplier) {
         RemotingServer rpcServer = getRpcServer(protocol, address);
         if (rpcServer == null) {
             Lock lock = getLock(protocol, address);
             synchronized (lock) {
                 if ((rpcServer = getRpcServer(protocol, address)) == null) {
-                    rpcServer = supplier.get();
+                    rpcServer = supplier.apply(protocol, address);
                     putRpcServer(protocol, address, rpcServer);
                 }
             }

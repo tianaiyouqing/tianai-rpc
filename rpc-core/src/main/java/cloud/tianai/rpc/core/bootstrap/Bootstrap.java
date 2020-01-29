@@ -60,7 +60,7 @@ public class Bootstrap {
     }
 
     private void startRemotingClient() {
-        remotingClient = RpcClientHolder.computeIfAbsent(protocol, url.getAddress(), () -> {
+        remotingClient = RpcClientHolder.computeIfAbsent(protocol, url.getAddress(), (p, u) -> {
             RemotingClient r = RemotingClientFactory.create(protocol);
             if (Objects.isNull(r)) {
                 throw new RpcException("未找到对应的远程server, protocol=" + protocol);

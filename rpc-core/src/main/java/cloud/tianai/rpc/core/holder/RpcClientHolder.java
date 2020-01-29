@@ -5,6 +5,8 @@ import cloud.tianai.remoting.api.RemotingClient;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -48,13 +50,13 @@ public class RpcClientHolder {
         return rpcClientMap.get(getKey(protocol, address));
     }
 
-    public static RemotingClient computeIfAbsent(String protocol, String address, Supplier<RemotingClient> supplier) {
+    public static RemotingClient computeIfAbsent(String protocol, String address, BiFunction<String, String, RemotingClient> supplier) {
         RemotingClient rpcClient = getRpcClient(protocol, address);
         if (rpcClient == null) {
             Lock lock = getLock(protocol, address);
             synchronized (lock) {
                 if ((rpcClient = getRpcClient(protocol, address)) == null) {
-                    rpcClient = supplier.get();
+                    rpcClient = supplier.apply(protocol, address);
                     putRpcClient(protocol, address, rpcClient);
                 }
             }

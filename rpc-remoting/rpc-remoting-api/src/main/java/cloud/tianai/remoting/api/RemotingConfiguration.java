@@ -13,7 +13,7 @@ import lombok.Data;
 @Data
 public class RemotingConfiguration {
     /** ip. */
-    private String host = "127.0.0.1";
+    private String host = IPUtils.getHostIp();
     /** 端口. */
     private Integer port = 20880;
     /** 工作线程数. */

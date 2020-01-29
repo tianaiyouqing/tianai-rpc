@@ -26,6 +26,8 @@ public interface Registry {
      */
     Result<List<URL>> lookup(URL url);
 
+    boolean isStart();
+
     /**
      * 订阅
      * @param url

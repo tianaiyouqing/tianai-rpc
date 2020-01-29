@@ -4,25 +4,37 @@ import cloud.tianai.remoting.api.*;
 import cloud.tianai.rpc.common.KeyValue;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
+import cloud.tianai.rpc.common.util.IPUtils;
 import cloud.tianai.rpc.core.factory.CodecFactory;
 import cloud.tianai.rpc.core.factory.RegistryFactory;
 import cloud.tianai.rpc.core.factory.RemotingServerFactory;
 import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcServerHolder;
+import cloud.tianai.rpc.core.util.RegistryUtils;
 import cloud.tianai.rpc.registory.api.Registry;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 public class ServerBootstrap {
+
+    /**
+     * 网络抖动造成的重试次数.
+     */
+    public static final int REGISTRY_RETRY = 5;
 
     private RemotingServerConfiguration prop = new RemotingServerConfiguration();
     private URL registryUrl = new URL();
     private String server = "netty";
     private String codec;
+
+
     /**
      * 远程Server.
      */
@@ -121,7 +133,7 @@ public class ServerBootstrap {
         String host = prop.getHost();
         Integer port = prop.getPort();
         if (host == null) {
-            host = "127.0.0.1";
+            host = IPUtils.getHostIp();
         }
         if (port == null) {
             return host;
@@ -130,17 +142,17 @@ public class ServerBootstrap {
     }
 
     private void startRemotingServer() {
-        remotingServer = RpcServerHolder.computeIfAbsent(server, getServerAddress(), () -> {
-            RemotingServer r = RemotingServerFactory.create(server);
+        remotingServer = RpcServerHolder.computeIfAbsent(server, getServerAddress(), (s, a) -> {
+            RemotingServer r = RemotingServerFactory.create(s);
             if (Objects.isNull(r)) {
-                throw new RpcException("未找到对应的远程server, server=" + server);
+                throw new RpcException("未找到对应的远程server, server=" + s);
             }
             // 启动远程server
             // 配置解析器
             prop.setRemotingDataProcessor(new RequestResponseRemotingDataProcessor(rpcInvocation));
             KeyValue<RemotingDataEncoder, RemotingDataDecoder> encoderAndDecoder = CodecFactory.getCodec(this.codec);
             if (encoderAndDecoder == null || !encoderAndDecoder.isNotEmpty()) {
-                throw new RpcException("未找到对应的codec， codec=" + this.codec);
+                throw new RpcException("未找到对应的codec， codec=".concat(this.codec));
             }
             // 编码解码器
             prop.setEncoder(encoderAndDecoder.getKey());
@@ -151,12 +163,7 @@ public class ServerBootstrap {
     }
 
     private void startRegistry() {
-        registry = RegistryHolder.computeIfAbsent(registryUrl, () -> {
-            Registry r = RegistryFactory.createRegistry(registryUrl.getProtocol());
-            // 启动服务注册
-            r.start(registryUrl);
-            return r;
-        });
+        registry = RegistryHolder.computeIfAbsent(registryUrl, RegistryUtils::createAndStart);
     }
 
     public void shutdown() {

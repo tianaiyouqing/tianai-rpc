@@ -11,6 +11,9 @@ public interface RemotingEndpoint {
      */
     RemotingChannelHolder start(RemotingConfiguration config) throws RpcRemotingException;
 
+
+
+
     /**
      * 获取唯一ID
      * @return

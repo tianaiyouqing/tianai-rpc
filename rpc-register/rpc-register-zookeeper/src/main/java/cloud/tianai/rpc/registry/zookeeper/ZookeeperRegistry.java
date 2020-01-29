@@ -62,8 +62,14 @@ public class ZookeeperRegistry implements Registry {
         if (!start.compareAndSet(false, true)) {
             throw new RpcException("已经启动，不可重复启动");
         }
-        this.zookeeperUrl = url;
-        init();
+        try {
+            this.zookeeperUrl = url;
+            init();
+        } catch (Exception e){
+            // 启动设置为false
+            start.set(false);
+            throw e;
+        }
         return this;
     }
 
@@ -133,6 +139,11 @@ public class ZookeeperRegistry implements Registry {
             e.printStackTrace();
             return Result.ofError(e.getMessage());
         }
+    }
+
+    @Override
+    public boolean isStart() {
+        return start.get();
     }
 
     @Override

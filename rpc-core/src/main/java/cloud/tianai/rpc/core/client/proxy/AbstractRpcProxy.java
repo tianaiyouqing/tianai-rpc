@@ -6,20 +6,22 @@ import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.CollectionUtils;
+import cloud.tianai.rpc.core.constant.CommonConstant;
 import cloud.tianai.rpc.core.constant.RpcClientConfigConstant;
 import cloud.tianai.rpc.core.constant.RpcConfigConstant;
 import cloud.tianai.rpc.core.constant.RpcServerConfigConstant;
 import cloud.tianai.rpc.core.factory.LoadBalanceFactory;
-import cloud.tianai.rpc.core.factory.RegistryFactory;
 import cloud.tianai.rpc.core.factory.RemotingClientFactory;
 import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
 import cloud.tianai.rpc.core.loadbalance.LoadBalance;
 import cloud.tianai.rpc.core.loadbalance.impl.RoundRobinLoadBalance;
+import cloud.tianai.rpc.core.util.RegistryUtils;
 import cloud.tianai.rpc.registory.api.NotifyListener;
 import cloud.tianai.rpc.registory.api.Registry;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Method;
@@ -35,6 +37,7 @@ import static cloud.tianai.rpc.core.factory.CodecFactory.getCodec;
  * @Date: 2020/01/28 11:44
  * @Description: RPC代理对象
  */
+@Slf4j
 public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener {
     /**
      * 接口的class类型.
@@ -66,6 +69,22 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
     protected Properties prop;
 
     protected RemotingClient remotingClient;
+
+    /**
+     * 默认重试次数3次.
+     */
+    public static final int DEFAULT_REQUEST_RETRY = 3;
+
+    /**
+     * 服务注册连接时默认重试次数.
+     */
+    public static final int DEFAULT_REGISTRY_RETRY = 3;
+    /**
+     * 请求重试次数.
+     */
+    protected int retry = DEFAULT_REQUEST_RETRY;
+
+    protected Integer registryRetry = DEFAULT_REGISTRY_RETRY;
 
     /***
      * 查看urls 并且订阅
@@ -141,19 +160,14 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
      * @param prop
      * @return
      */
-    public static Registry startRegistry(Properties prop) {
+    protected Registry startRegistry(Properties prop) {
         String registryProto = prop.getProperty(RpcClientConfigConstant.REGISTER);
         if (StringUtils.isBlank(registryProto)) {
             throw new IllegalArgumentException("无法读取到registry， 必须指定registry的protocol");
         }
         URL registryUrl = readRegistryConfiguration(prop);
 
-        Registry registry = RegistryHolder.computeIfAbsent(registryUrl, () -> {
-            Registry r = RegistryFactory.createRegistry(registryUrl.getProtocol());
-            // 启动服务注册
-            r.start(registryUrl);
-            return r;
-        });
+        Registry registry = RegistryHolder.computeIfAbsent(registryUrl, RegistryUtils::createAndStart);
         return registry;
     }
 
@@ -181,6 +195,9 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         }
         String portStr = prop.getProperty(RpcServerConfigConstant.REGISTRY_PORT);
         String registryProtocol = prop.getProperty(RpcServerConfigConstant.REGISTER);
+        // 重试次数
+        String retryStr = prop.getProperty(CommonConstant.RETRY);
+
         if (StringUtils.isBlank(registryProtocol)) {
             throw new IllegalArgumentException("获取注册器失败，必须指定 [registryProtocol]");
         }
@@ -189,6 +206,10 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             registerPort = Integer.valueOf(portStr);
         }
         URL url = new URL(registryProtocol, registerHost, registerPort);
+        if(StringUtils.isNotBlank(retryStr)) {
+            // 添加重试次数
+            url.addParameter(CommonConstant.RETRY, retryStr);
+        }
         return url;
     }
 
@@ -223,7 +244,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
 
 
     private RemotingClient getRpcClient(URL url) {
-        return RpcClientHolder.computeIfAbsent(url.getProtocol(), url.getAddress(), () -> {
+        return RpcClientHolder.computeIfAbsent(url.getProtocol(), url.getAddress(), (p, a) -> {
             String host = url.getHost();
             if (StringUtils.isBlank(host)) {
                 throw new RpcException("客户端启动失败，必须指定host");

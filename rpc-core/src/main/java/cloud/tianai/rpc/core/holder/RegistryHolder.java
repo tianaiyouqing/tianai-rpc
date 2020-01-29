@@ -5,6 +5,7 @@ import cloud.tianai.rpc.registory.api.Registry;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -49,13 +50,13 @@ public class RegistryHolder {
         }
     }
 
-    public static Registry computeIfAbsent(URL url, Supplier<Registry> supplier) {
+    public static Registry computeIfAbsent(URL url, Function<URL, Registry> supplier) {
         String key = getKey(url);
         Registry registry = getRegistry(key);
         if (registry == null) {
             synchronized (LOCK) {
                 if ((registry = getRegistry(key)) == null) {
-                    registry = supplier.get();
+                    registry = supplier.apply(url);
                     putRegistry(key, registry);
                 }
             }
