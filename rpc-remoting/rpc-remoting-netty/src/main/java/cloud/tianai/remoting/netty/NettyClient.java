@@ -13,6 +13,7 @@ import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 
@@ -23,24 +24,28 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @Date: 2020/01/05 17:42
  * @Description: 基于netty的client
  */
+@Slf4j
 public class NettyClient extends AbstractRemotingClient {
     public static final String REMOTING_TYPE = "NETTY";
 
     private Channel channel;
     private EventLoopGroup workerGroup;
     private NettyRemotingChannelHolder channelHolder;
+    private Bootstrap bootstrap;
+    private RemotingConfiguration config;
 
     @Override
     public RemotingChannelHolder doStart(RemotingConfiguration config) throws RpcRemotingException {
-        Bootstrap bs = new Bootstrap();
+        bootstrap = new Bootstrap();
+        this.config = config;
         // 初始化eventLoopGroup
         initEventLoopGroup(config);
 
         // 包装bootstrap
-        warpBootStrap(bs, config);
+        warpBootStrap(bootstrap, config);
 
         // 链接
-        this.channel = connect(bs, config);
+        this.channel = connect(bootstrap, config);
 
         channelHolder = NettyRemotingChannelHolder.create(this.channel);
         return channelHolder;
@@ -91,9 +96,19 @@ public class NettyClient extends AbstractRemotingClient {
 
     @Override
     public void doStop() throws RpcRemotingException {
-        if(workerGroup != null) {
+        if (workerGroup != null) {
             workerGroup.shutdownGracefully();
         }
+    }
+
+    @Override
+    public boolean isOpen() {
+        return channel.isOpen();
+    }
+
+    @Override
+    public boolean isActive() {
+        return channel.isActive();
     }
 
     @Override
@@ -104,5 +119,20 @@ public class NettyClient extends AbstractRemotingClient {
     @Override
     public String getRemotingType() {
         return REMOTING_TYPE;
+    }
+
+    @Override
+    public void doConnect() {
+        if (this.channel != null && this.channel.isOpen()) {
+            // 关闭channel
+            log.info("关闭channel进行重连....");
+            this.channel.disconnect();
+        }
+
+        // 连接channel
+        Channel channel = connect(this.bootstrap, config);
+        log.info("重连channel:" + channel.remoteAddress());
+        this.channelHolder.setChannel(channel);
+
     }
 }

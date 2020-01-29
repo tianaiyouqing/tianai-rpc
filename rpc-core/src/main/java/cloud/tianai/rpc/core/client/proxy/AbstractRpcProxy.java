@@ -1,6 +1,8 @@
 package cloud.tianai.rpc.core.client.proxy;
 
 import cloud.tianai.remoting.api.*;
+import cloud.tianai.remoting.api.exception.RpcChannelClosedException;
+import cloud.tianai.remoting.api.exception.RpcRemotingException;
 import cloud.tianai.rpc.common.KeyValue;
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
@@ -29,6 +31,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static cloud.tianai.rpc.core.factory.CodecFactory.getCodec;
 
@@ -85,6 +91,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
     protected int retry = DEFAULT_REQUEST_RETRY;
 
     protected Integer registryRetry = DEFAULT_REGISTRY_RETRY;
+
 
     /***
      * 查看urls 并且订阅
@@ -206,7 +213,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             registerPort = Integer.valueOf(portStr);
         }
         URL url = new URL(registryProtocol, registerHost, registerPort);
-        if(StringUtils.isNotBlank(retryStr)) {
+        if (StringUtils.isNotBlank(retryStr)) {
             // 添加重试次数
             url.addParameter(CommonConstant.RETRY, retryStr);
         }
@@ -231,6 +238,11 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         List<RemotingClient> rpcClients = getRpcClients(urls);
         // 通过负载均衡器拉取RpcClient
         RemotingClient rpcClient = loadBalance.select(rpcClients, url, request);
+        if (!rpcClient.isOpen()) {
+            // 如果通道已经关闭，进行重连试试
+            // todo 最好做成异步重连
+            rpcClient.doConnect();
+        }
         return rpcClient;
     }
 
@@ -284,6 +296,78 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         request.setReturnType(method.getReturnType());
         request.setHeartbeat(false);
         return request;
+    }
+
+    /**
+     * 执行请求
+     *
+     * @param request 请求体
+     * @return Object
+     * @throws TimeoutException 重试次数达到后如果还请求不到，理应直接抛出异常
+     */
+    protected Object request(RemotingClient rpcClient, Request request) throws TimeoutException {
+        // 通过负载均衡读取到对应的rpcClient
+        // 如果请求超时，理应再从负载均衡器里拿一个连接执行重试
+        CompletableFuture<Object> future = rpcClient.getchannel().request(request, requestTimeout);
+        Object resObj = null;
+        try {
+            resObj = future.get(requestTimeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RpcChannelClosedException) {
+                if (!rpcClient.isActive()) {
+                    synchronized (lock) {
+                        // 休眠100毫秒重试一下
+                        if (!rpcClient.isActive()) {
+                            try {
+                                TimeUnit.MILLISECONDS.sleep(100);
+                            } catch (InterruptedException ex) {
+                                // 不做处理
+                            }
+                            // 这里应该同步处理
+                            try {
+                                rpcClient.doConnect();
+                            } catch (RpcRemotingException ex) {
+                                throw new TimeoutException(ex.getMessage());
+                            }
+                        }
+                    }
+                }
+                // 如果连接成功,重新请求
+                if (rpcClient.isActive()) {
+                    resObj = request(rpcClient, request);
+                } else {
+                    throw new TimeoutException(e.getCause().getMessage());
+                }
+            } else {
+                throw new TimeoutException(e.getCause().getMessage());
+            }
+        }
+        return resObj;
+    }
+
+    protected Object retryRequest(RemotingClient rpcClient, Request request, int currRetry) throws TimeoutException {
+        // 负责继续请求重试
+        try {
+            Object res = request(loadBalance(request), request);
+            return res;
+        } catch (TimeoutException e) {
+            currRetry++;
+            // 如果超过重试次数， 直接抛异常
+            log.info("请求重试, 请求体 [{}], 当前已重试次数{}", request, currRetry);
+            if (currRetry > retry) {
+                throw new TimeoutException("请求失败， 超过最大重试次数");
+            }
+            // 休眠100毫秒重试一下
+            try {
+                TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException ex) {
+                // 不做处理
+            }
+            log.info("请求重试, 请求体 [{}], 当前已重试次数{}", request, currRetry);
+            return retryRequest(rpcClient, request, currRetry);
+        }
     }
 
     private List<URL> lookUpOfThrow() {

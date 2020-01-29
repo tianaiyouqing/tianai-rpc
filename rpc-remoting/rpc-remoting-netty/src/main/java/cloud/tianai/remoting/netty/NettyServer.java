@@ -152,6 +152,16 @@ public class NettyServer extends AbstractRemotingServer {
     }
 
     @Override
+    public boolean isOpen() {
+        return channel.isOpen();
+    }
+
+    @Override
+    public boolean isActive() {
+        return channel.isActive();
+    }
+
+    @Override
     public RemotingChannelHolder getchannel() {
         return channelHolder;
     }

@@ -4,4 +4,7 @@ import cloud.tianai.remoting.api.exception.RpcRemotingException;
 
 public interface RemotingClient extends RemotingEndpoint {
 
+    void doConnect();
+
+
 }

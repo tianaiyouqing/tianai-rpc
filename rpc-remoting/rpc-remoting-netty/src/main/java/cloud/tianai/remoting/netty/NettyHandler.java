@@ -4,6 +4,8 @@ import cloud.tianai.remoting.api.RemotingDataProcessor;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -32,9 +34,9 @@ public class NettyHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if(executorService != null) {
+        if (executorService != null) {
             executorService.execute(new NettyRunnable(ctx, msg, remotingDataProcessor));
-        }else {
+        } else {
             // 当前线程执行
             new NettyRunnable(ctx, msg, remotingDataProcessor).run();
         }
@@ -49,15 +51,22 @@ public class NettyHandler extends ChannelDuplexHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        if (cause instanceof IOException) {
-            log.warn("netty IO异常: e=" + cause.getMessage());
-        } else {
-            cause.printStackTrace();
-        }
         ctx.close();
         super.exceptionCaught(ctx, cause);
     }
 
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if(evt instanceof IdleStateEvent) {
+            IdleState state = ((IdleStateEvent) evt).state();
+            if (state == IdleState.ALL_IDLE) {
+                // write heartbeat to server
+            }
+        } else {
+            super.userEventTriggered(ctx, evt);
+        }
+    }
 
     public static class NettyRunnable implements Runnable {
         private ChannelHandlerContext ctx;

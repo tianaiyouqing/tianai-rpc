@@ -12,8 +12,17 @@ public interface RemotingEndpoint {
     RemotingChannelHolder start(RemotingConfiguration config) throws RpcRemotingException;
 
 
+    /**
+     * 是否打开状态
+     * @return
+     */
+    boolean isOpen();
 
-
+    /**
+     * 是否处于活跃状态，并已经连接
+     * @return
+     */
+    boolean isActive();
     /**
      * 获取唯一ID
      * @return
