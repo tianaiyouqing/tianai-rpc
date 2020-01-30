@@ -47,23 +47,30 @@ public class RpcClientTest {
         RpcProxy<Demo2> rpcProxy2 = new JdkRpcProxy<>();
         Demo2 proxy2 = rpcProxy2.createProxy(Demo2.class, prop, true, true);
 
-//        IntStream.range(0,1000).parallel().forEach(i -> {
+//        IntStream.range(0,2000).parallel().forEach(i -> {
 //            String res =  proxy.sayHello();
 //            System.out.println("rpc调用返回:" + res);
 //        });
 
 
-        for (int i = 0; i < 1000; i++) {
-            new Thread(() -> {
-                for (int i1 = 0; i1 < 20; i1++) {
-                    String res = proxy.sayHello();
-                    System.out.println("rpc调用返回:" + res);
-                }
-            }).start();
-        }
+//        for (int i = 0; i < 1000; i++) {
+//            new Thread(() -> {
+//                for (int i1 = 0; i1 < 20; i1++) {
+//                    String res = proxy.sayHello();
+//                    System.out.println("rpc调用返回:" + res);
+//                }
+//            }).start();
+//        }
 //
-//        DemoRes demoRes = proxy.sayHello();
-//        System.out.println("返回数据:" + demoRes);
+        String res = proxy.sayHello();
+        System.out.println("返回数据:" + res);
+
+        TimeUnit.SECONDS.sleep(20);
+
+        System.out.println("20s休眠");
+        TimeUnit.SECONDS.sleep(5);
+         res = proxy.sayHello();
+        System.out.println("返回数据:" + res);
 
         TimeUnit.HOURS.sleep(1);
     }

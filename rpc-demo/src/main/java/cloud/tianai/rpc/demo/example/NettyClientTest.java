@@ -47,6 +47,11 @@ public class NettyClientTest {
         }
 
         @Override
+        public void sendHeartbeat(Channel channel, Object extend) {
+
+        }
+
+        @Override
         public boolean support(Object msg) {
             return true;
         }

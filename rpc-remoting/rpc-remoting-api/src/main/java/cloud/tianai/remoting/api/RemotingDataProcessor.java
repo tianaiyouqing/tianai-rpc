@@ -25,6 +25,14 @@ public interface RemotingDataProcessor {
     Object writeMessage(Channel channel, Object msg, Object extend);
 
     /**
+     * 发送心跳请求
+     * @param channel
+     * @param msg
+     * @param extend
+     */
+    void sendHeartbeat(Channel channel, Object extend);
+
+    /**
      * 该解析器是否支持给类型的数据解析
      * @param msg
      * @return

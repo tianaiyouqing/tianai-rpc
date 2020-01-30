@@ -8,7 +8,6 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -17,12 +16,12 @@ import java.util.concurrent.ExecutorService;
  * @Description: Netty Handler
  */
 @Slf4j
-public class NettyHandler extends ChannelDuplexHandler {
+public class NettyServerHandler extends ChannelDuplexHandler {
     private RemotingDataProcessor remotingDataProcessor;
     ExecutorService executorService;
 
-    public NettyHandler(ExecutorService executorService,
-                        RemotingDataProcessor remotingDataProcessor) {
+    public NettyServerHandler(ExecutorService executorService,
+                              RemotingDataProcessor remotingDataProcessor) {
         this.executorService = executorService;
         this.remotingDataProcessor = remotingDataProcessor;
     }
@@ -59,10 +58,8 @@ public class NettyHandler extends ChannelDuplexHandler {
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if(evt instanceof IdleStateEvent) {
-            IdleState state = ((IdleStateEvent) evt).state();
-            if (state == IdleState.ALL_IDLE) {
-                // write heartbeat to server
-            }
+            // 心跳如果无响应，直接关闭通道
+            ctx.close();
         } else {
             super.userEventTriggered(ctx, evt);
         }

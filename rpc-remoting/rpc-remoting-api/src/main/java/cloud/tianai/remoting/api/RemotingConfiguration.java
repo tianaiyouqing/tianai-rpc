@@ -30,4 +30,6 @@ public class RemotingConfiguration {
     private Integer connectTimeout = 5000;
     /** 工作线程池. */
     private ExecutorService threadPool;;
+    /** 心跳超时. */
+    private Integer idleTimeout = 6000;
 }

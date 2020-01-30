@@ -122,7 +122,7 @@ public class NettyServer extends AbstractRemotingServer {
                         pipeline.addLast("Decoder", new NettyDecoder(config.getDecoder()));
                         pipeline.addLast("server-idle-handler",
                                 new IdleStateHandler(0, 0, config.getIdleTimeout(), MILLISECONDS));
-                        pipeline.addLast("handler", new NettyHandler(threadPool, config.getRemotingDataProcessor()));
+                        pipeline.addLast("handler", new NettyServerHandler(threadPool, config.getRemotingDataProcessor()));
                     }
                 });
     }

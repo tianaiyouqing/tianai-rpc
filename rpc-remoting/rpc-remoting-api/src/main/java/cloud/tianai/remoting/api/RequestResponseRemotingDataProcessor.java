@@ -10,7 +10,6 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
 
     ExecutorService executorService;
     public RequestResponseRemotingDataProcessor(RpcInvocation rpcInvocation) {
-
         this(rpcInvocation, 200, 200);
     }
 
@@ -46,6 +45,7 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
         if(request.isHeartbeat()) {
             // 如果是心跳请求，直接返回
             result = "heartbeat success";
+            System.out.println("心跳请求返回:--->");
         }else {
             try {
                 result = rpcInvocation.invoke(copyReq);
@@ -56,7 +56,7 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
                 return warpResponse(e, request);
             }
         }
-        return warpResponse(result, request);
+       return warpResponse(result, request);
     }
 
     private Response warpResponse(Throwable e, Request request) {
@@ -91,6 +91,13 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
     @Override
     public Object writeMessage(Channel channel, Object msg, Object extend) {
         return null;
+    }
+
+    @Override
+    public void sendHeartbeat(Channel channel, Object extend) {
+        Request request = new Request();
+        request.setHeartbeat(true);
+        channel.write(request);
     }
 
     @Override

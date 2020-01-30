@@ -13,6 +13,7 @@ import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -78,8 +79,10 @@ public class NettyClient extends AbstractRemotingClient {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast("Encoder", new NettyEncoder(config.getEncoder()));
                         pipeline.addLast("Decoder", new NettyDecoder(config.getDecoder()));
-                        // 客户端调用不需要用线程池
-                        pipeline.addLast("handler", new NettyHandler(null, config.getRemotingDataProcessor()));
+                        // client 处理只读心跳
+                        pipeline.addLast("client-idle-handler",
+                                new IdleStateHandler(config.getIdleTimeout(), 0, 0, MILLISECONDS));
+                        pipeline.addLast("handler", new NettyClientHandler(config.getRemotingDataProcessor()));
                     }
                 });
     }
