@@ -18,7 +18,7 @@ public class RpcServerImplTest2 {
                     .timeout(5000)
                     .registry(new URL("zookeeper", "127.0.0.1", 2181))
                     .server("netty")
-                    .port(20886)
+                    .port(20881)
                     .register(Demo.class, new DemoImpl())
                     .register(Demo2.class, new DemoImpl2())
                     .start();

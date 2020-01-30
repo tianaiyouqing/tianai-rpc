@@ -45,7 +45,6 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
         if(request.isHeartbeat()) {
             // 如果是心跳请求，直接返回
             result = "heartbeat success";
-            System.out.println("心跳请求返回:--->");
         }else {
             try {
                 result = rpcInvocation.invoke(copyReq);

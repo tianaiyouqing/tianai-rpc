@@ -11,7 +11,6 @@ public interface RemotingEndpoint {
      */
     RemotingChannelHolder start(RemotingConfiguration config) throws RpcRemotingException;
 
-
     /**
      * 是否打开状态
      * @return

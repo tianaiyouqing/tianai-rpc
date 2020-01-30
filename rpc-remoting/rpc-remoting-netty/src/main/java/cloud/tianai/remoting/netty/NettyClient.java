@@ -17,6 +17,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -41,7 +42,6 @@ public class NettyClient extends AbstractRemotingClient {
         this.config = config;
         // 初始化eventLoopGroup
         initEventLoopGroup(config);
-
         // 包装bootstrap
         warpBootStrap(bootstrap, config);
 
@@ -137,5 +137,13 @@ public class NettyClient extends AbstractRemotingClient {
         log.info("重连channel:" + channel.remoteAddress());
         this.channelHolder.setChannel(channel);
 
+    }
+
+    @Override
+    public SocketAddress getRemoteAddress() {
+        if(channel != null) {
+            return channel.remoteAddress();
+        }
+        return null;
     }
 }

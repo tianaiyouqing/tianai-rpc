@@ -232,18 +232,20 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
      * @return
      */
     protected RemotingClient loadBalance(Request request) {
-        // 读取到注册到注册器中的url
-        List<URL> urls = lookUpOfThrow();
-        // 通过URL读取到对应的RpcClient
-        List<RemotingClient> rpcClients = getRpcClients(urls);
-        // 通过负载均衡器拉取RpcClient
-        RemotingClient rpcClient = loadBalance.select(rpcClients, url, request);
-        if (!rpcClient.isOpen()) {
-            // 如果通道已经关闭，进行重连试试
-            // todo 最好做成异步重连
-            rpcClient.doConnect();
+        synchronized (lock) {
+            // 读取到注册到注册器中的url
+            List<URL> urls = lookUpOfThrow();
+            // 通过URL读取到对应的RpcClient
+            List<RemotingClient> rpcClients = getRpcClients(urls);
+            // 通过负载均衡器拉取RpcClient
+            RemotingClient rpcClient = loadBalance.select(rpcClients, url, request);
+            if (!rpcClient.isOpen()) {
+                // 如果通道已经关闭，进行重连试试
+                // todo 最好做成异步重连
+                rpcClient.doConnect();
+            }
+            return rpcClient;
         }
-        return rpcClient;
     }
 
     private List<RemotingClient> getRpcClients(List<URL> urls) {

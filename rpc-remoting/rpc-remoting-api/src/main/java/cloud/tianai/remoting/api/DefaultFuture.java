@@ -43,7 +43,7 @@ public class DefaultFuture extends CompletableFuture<Object> {
                 future.doReceived(response);
             } else if (response.isHeartbeat()) {
                 // 如果是心跳请求返回的数据， 直接不做处理
-                log.info("远程地址[" + channel.getRemoteAddress() +"]  -> 心跳请求返回.");
+                log.debug("远程地址[" + channel.getRemoteAddress() +"]  -> 心跳请求返回.");
             } else {
                 log.warn("The timeout response finally returned at "
                         + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()))
