@@ -21,6 +21,7 @@ import cloud.tianai.rpc.core.loadbalance.impl.RoundRobinLoadBalance;
 import cloud.tianai.rpc.core.util.RegistryUtils;
 import cloud.tianai.rpc.registory.api.NotifyListener;
 import cloud.tianai.rpc.registory.api.Registry;
+import cloud.tianai.rpc.registory.api.StatusListener;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import lombok.extern.slf4j.Slf4j;
@@ -108,6 +109,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             throw new RpcException("无法读取到对应接口的注册地址, " + url);
         }
         this.subscribeUrls = urls;
+        log.info("zookeeper拉取到消息:{}", urls);
         this.registry.subscribe(url, this);
     }
 
@@ -175,6 +177,13 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         URL registryUrl = readRegistryConfiguration(prop);
 
         Registry registry = RegistryHolder.computeIfAbsent(registryUrl, RegistryUtils::createAndStart);
+        registry.subscribe(new StatusListener() {
+            @Override
+            public void reConnected() {
+                // 重新拉取
+                lookAndSubscribeUrl(url);
+            }
+        });
         return registry;
     }
 
@@ -222,6 +231,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
 
     @Override
     public void notify(List<URL> urls) {
+        System.out.println("订阅到消息: " + urls);
         this.subscribeUrls = urls;
     }
 

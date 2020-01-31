@@ -6,6 +6,7 @@ import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.CollectionUtils;
 import cloud.tianai.rpc.registory.api.NotifyListener;
 import cloud.tianai.rpc.registory.api.Registry;
+import cloud.tianai.rpc.registory.api.StatusListener;
 import lombok.extern.slf4j.Slf4j;
 import org.I0Itec.zkclient.IZkChildListener;
 import org.I0Itec.zkclient.IZkStateListener;
@@ -17,6 +18,7 @@ import org.apache.zookeeper.Watcher;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -37,6 +39,8 @@ public class ZookeeperRegistry implements Registry {
      * NotifyListener -> IZkDataListener
      */
     private Map<NotifyListener, IZkChildListener> notifyListenerZkDataListenerMap = new HashMap<>(32);
+
+    private Set<StatusListener> statusListenerSet = new CopyOnWriteArraySet<>();
 
     /**
      * zk集群时使用，暂时不用.
@@ -93,7 +97,7 @@ public class ZookeeperRegistry implements Registry {
         String address = zookeeperUrl.getAddress();
         int timeout = Integer.parseInt(zookeeperUrl.getParameter("timeout", String.valueOf(5000)));
         zkClient = new ZkClient(address, timeout);
-        zkClient.subscribeStateChanges(new WatcherListener());
+        zkClient.subscribeStateChanges(new WatcherListener(statusListenerSet));
         this.root = zookeeperUrl.getParameter(GROUP_KEY, DEFAULT_ROOT);
         // 判断根节点是否存在，如果不存在则创建， 创建类型必须是持久类型的
         createNodeIfNecessary(this.root, CreateMode.PERSISTENT);
@@ -126,6 +130,7 @@ public class ZookeeperRegistry implements Registry {
             throw new IllegalStateException(e.getMessage(), e);
         }
         if (cache) {
+            registryCache.remove(url);
             registryCache.put(url, EMPTY_VALUE);
         }
         return Result.ofSuccess("success");
@@ -133,6 +138,7 @@ public class ZookeeperRegistry implements Registry {
 
     public void reRegister() {
         for (URL url : registryCache.keySet()) {
+            log.info("zookeeper reRegister, url={}", url);
             register(url, false);
         }
     }
@@ -177,6 +183,11 @@ public class ZookeeperRegistry implements Registry {
         ZkChildListenerAdapter zkChildListenerAdapter = new ZkChildListenerAdapter(listener);
         zkClient.subscribeChildChanges(path, zkChildListenerAdapter);
         notifyListenerZkDataListenerMap.put(listener, zkChildListenerAdapter);
+    }
+
+    @Override
+    public void subscribe(StatusListener statusListener) {
+        statusListenerSet.add(statusListener);
     }
 
     @Override
@@ -244,11 +255,23 @@ public class ZookeeperRegistry implements Registry {
     }
 
     private class WatcherListener implements IZkStateListener {
+
+        private Set<StatusListener> statusListenerSet;
+
+        public WatcherListener(Set<StatusListener> statusListenerSet) {
+            this.statusListenerSet = statusListenerSet;
+        }
+
         @Override
         public void handleStateChanged(Watcher.Event.KeeperState state) {
+            System.out.println("handleStateChanged() ===> " + state);
             if (Watcher.Event.KeeperState.Expired == state || Watcher.Event.KeeperState.Disconnected == state) {
                 System.out.println("重连zookeeper");
-                reConnected();
+                try {
+                    reConnected();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -271,14 +294,27 @@ public class ZookeeperRegistry implements Registry {
         }
 
         private void reConnected() {
-            ZookeeperRegistry.this.destroy();
             try {
-                //wait for the zk server start success!
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                log.error(e.getMessage(), e);
+                System.out.println("执行reConnect");
+                ZookeeperRegistry.this.destroy();
+                try {
+                    //wait for the zk server start success!
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    log.error(e.getMessage(), e);
+                }
+                ZookeeperRegistry.this.init();
+            } catch (Exception e) {
+                // 报错后重新连接
+                e.printStackTrace();
+                reConnected();
+                return;
             }
-            ZookeeperRegistry.this.init();
+            // 重新注册
+            ZookeeperRegistry.this.reRegister();
+            for (StatusListener statusListener : statusListenerSet) {
+                statusListener.reConnected();
+            }
         }
     }
 

@@ -46,10 +46,10 @@ public class RpcClientTest {
         RpcProxy<Demo2> rpcProxy2 = new JdkRpcProxy<>();
         Demo2 proxy2 = rpcProxy2.createProxy(Demo2.class, prop, true, true);
 
-        IntStream.range(0,2000).parallel().forEach(i -> {
+//        IntStream.range(0,2000).parallel().forEach(i -> {
             String res =  proxy.sayHello();
 //            System.out.println("rpc调用返回:" + res);
-        });
+//        });
 
 
 //        for (int i = 0; i < 1000; i++) {

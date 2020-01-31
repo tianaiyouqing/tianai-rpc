@@ -36,6 +36,12 @@ public interface Registry {
     void subscribe(URL url, NotifyListener listener);
 
     /**
+     * 订阅registry的状态
+     * @param statusListener
+     */
+    void subscribe(StatusListener statusListener);
+
+    /**
      * 取消订阅
      * @param url
      * @param listener
