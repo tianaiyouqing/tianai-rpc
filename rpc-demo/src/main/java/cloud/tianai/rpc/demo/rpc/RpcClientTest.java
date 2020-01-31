@@ -3,7 +3,6 @@ package cloud.tianai.rpc.demo.rpc;
 import cloud.tianai.rpc.core.client.proxy.RpcProxy;
 import cloud.tianai.rpc.core.client.proxy.impl.JdkRpcProxy;
 import cloud.tianai.rpc.core.constant.RpcClientConfigConstant;
-import com.sun.xml.internal.ws.util.StreamUtils;
 
 import java.util.Arrays;
 import java.util.Properties;

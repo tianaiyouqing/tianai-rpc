@@ -352,7 +352,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
     protected Object retryRequest(RemotingClient rpcClient, Request request, int currRetry) throws TimeoutException {
         // 负责继续请求重试
         try {
-            Object res = request(loadBalance(request), request);
+            Object res = request(rpcClient, request);
             return res;
         } catch (TimeoutException e) {
             currRetry++;
@@ -368,7 +368,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
                 // 不做处理
             }
             log.info("请求重试, 请求体 [{}], 当前已重试次数{}", request, currRetry);
-            return retryRequest(rpcClient, request, currRetry);
+            return retryRequest(loadBalance(request), request, currRetry);
         }
     }
 
