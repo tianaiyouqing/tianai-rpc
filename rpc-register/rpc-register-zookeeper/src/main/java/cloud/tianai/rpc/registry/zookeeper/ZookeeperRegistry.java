@@ -11,10 +11,12 @@ import org.I0Itec.zkclient.IZkChildListener;
 import org.I0Itec.zkclient.IZkStateListener;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkNoNodeException;
+import org.I0Itec.zkclient.exception.ZkNodeExistsException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Watcher;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -57,6 +59,10 @@ public class ZookeeperRegistry implements Registry {
 
     private AtomicBoolean start = new AtomicBoolean(false);
 
+    private Map<URL, Object> registryCache = new ConcurrentHashMap<>(16);
+
+    private static final Object EMPTY_VALUE = new Object();
+
     @Override
     public Registry start(URL url) {
         if (!start.compareAndSet(false, true)) {
@@ -65,7 +71,7 @@ public class ZookeeperRegistry implements Registry {
         try {
             this.zookeeperUrl = url;
             init();
-        } catch (Exception e){
+        } catch (Exception e) {
             // 启动设置为false
             start.set(false);
             throw e;
@@ -75,7 +81,7 @@ public class ZookeeperRegistry implements Registry {
 
     @Override
     public void shutdown() {
-        if(zkClient != null) {
+        if (zkClient != null) {
             zkClient.close();
         }
         notifyListenerZkDataListenerMap.clear();
@@ -104,17 +110,31 @@ public class ZookeeperRegistry implements Registry {
 
     @Override
     public Result<?> register(URL url) {
+        return register(url, true);
+    }
+
+    public Result<?> register(URL url, boolean cache) {
         try {
             try {
                 String path = getPath(url);
                 create(path + PATH_SEPARATOR + URL.encode(url.toString()));
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new IllegalStateException(e.getMessage(), e);
             }
         } catch (ZkNoNodeException e) {
             // 创建
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+        if (cache) {
+            registryCache.put(url, EMPTY_VALUE);
         }
         return Result.ofSuccess("success");
+    }
+
+    public void reRegister() {
+        for (URL url : registryCache.keySet()) {
+            register(url, false);
+        }
     }
 
     private String getPath(URL url) {
@@ -194,9 +214,17 @@ public class ZookeeperRegistry implements Registry {
     }
 
     private void createEphemeral(String path) {
-        if (!zkClient.exists(path)) {
+        try {
             zkClient.createEphemeral(path);
+        } catch (ZkNodeExistsException e) {
+            // 如果node存在， 删除，重新创建
+            deleteNode(path);
+            createEphemeral(path);
         }
+    }
+
+    private void deleteNode(String path) {
+        zkClient.delete(path);
     }
 
     private void createPersistent(String path) {
@@ -205,12 +233,17 @@ public class ZookeeperRegistry implements Registry {
             createPersistent(path.substring(0, i));
         }
         if (!zkClient.exists(path)) {
-            zkClient.createPersistent(path);
+            try {
+                zkClient.createPersistent(path);
+            } catch (ZkNodeExistsException e) {
+                // 如果node已存在，不做任何处理
+                log.warn("ZNode " + path + " already exists.", e);
+            }
         }
+
     }
 
     private class WatcherListener implements IZkStateListener {
-
         @Override
         public void handleStateChanged(Watcher.Event.KeeperState state) {
             if (Watcher.Event.KeeperState.Expired == state || Watcher.Event.KeeperState.Disconnected == state) {
@@ -221,12 +254,20 @@ public class ZookeeperRegistry implements Registry {
 
         @Override
         public void handleNewSession() {
-
+            if (log.isInfoEnabled()) {
+                log.info("zookeeper new session ========-------->, 重新注册, addressCache=", ZookeeperRegistry.this.registryCache);
+            } else {
+                System.out.println("new session------------==============================>, addressCache=" + ZookeeperRegistry.this.registryCache);
+            }
+            // 重新注册
+            ZookeeperRegistry.this.reRegister();
         }
 
         @Override
         public void handleSessionEstablishmentError(Throwable error) {
-
+            // 回话建立错误
+            log.warn("zookkper回话建立错误， e=", error);
+            reConnected();
         }
 
         private void reConnected() {
