@@ -264,14 +264,10 @@ public class ZookeeperRegistry implements Registry {
 
         @Override
         public void handleStateChanged(Watcher.Event.KeeperState state) {
-            System.out.println("handleStateChanged() ===> " + state);
+            log.info("handleStateChanged() ===> {}",  state);
             if (Watcher.Event.KeeperState.Expired == state || Watcher.Event.KeeperState.Disconnected == state) {
-                System.out.println("重连zookeeper");
-                try {
-                    reConnected();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                log.info("重连zookeeper ===> ");
+                reConnected();
             }
         }
 
