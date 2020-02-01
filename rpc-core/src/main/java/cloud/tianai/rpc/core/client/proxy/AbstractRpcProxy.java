@@ -1,7 +1,6 @@
 package cloud.tianai.rpc.core.client.proxy;
 
 import cloud.tianai.remoting.api.*;
-import cloud.tianai.remoting.api.exception.RpcChannelClosedException;
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
 import cloud.tianai.rpc.common.KeyValue;
 import cloud.tianai.rpc.common.Result;
@@ -18,10 +17,10 @@ import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
 import cloud.tianai.rpc.core.loadbalance.LoadBalance;
 import cloud.tianai.rpc.core.loadbalance.impl.RoundRobinLoadBalance;
+import cloud.tianai.rpc.core.template.RpcClientTemplate;
 import cloud.tianai.rpc.core.util.RegistryUtils;
 import cloud.tianai.rpc.registory.api.NotifyListener;
 import cloud.tianai.rpc.registory.api.Registry;
-import cloud.tianai.rpc.registory.api.StatusListener;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static cloud.tianai.rpc.core.factory.CodecFactory.getCodec;
@@ -63,7 +59,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
      */
     protected List<URL> subscribeUrls = Collections.emptyList();
 
-    protected Object lock = new Object();
+    protected final Object lock = new Object();
     /**
      * 请求超时
      */
@@ -75,24 +71,17 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
 
     protected Properties prop;
 
-    protected RemotingClient remotingClient;
-
     /**
      * 默认重试次数3次.
      */
     public static final int DEFAULT_REQUEST_RETRY = 3;
 
     /**
-     * 服务注册连接时默认重试次数.
-     */
-    public static final int DEFAULT_REGISTRY_RETRY = 3;
-    /**
      * 请求重试次数.
      */
     protected int retry = DEFAULT_REQUEST_RETRY;
 
-    protected Integer registryRetry = DEFAULT_REGISTRY_RETRY;
-
+    protected RpcClientTemplate rpcClientTemplate;
 
     /***
      * 查看urls 并且订阅
@@ -152,6 +141,8 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         this.requestTimeout = Integer.valueOf(prop.getProperty(RpcClientConfigConstant.REQUEST_TIMEOUT,
                 String.valueOf(RpcClientConfigConstant.DEFAULT_REQUEST_TIMEOUT)));
 
+        // 构建rpcClientTemplate
+        rpcClientTemplate = new RpcClientTemplate(requestTimeout, retry, lock);
         return doCreateProxy();
 
     }
@@ -177,12 +168,9 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         URL registryUrl = readRegistryConfiguration(prop);
 
         Registry registry = RegistryHolder.computeIfAbsent(registryUrl, RegistryUtils::createAndStart);
-        registry.subscribe(new StatusListener() {
-            @Override
-            public void reConnected() {
-                // 重新拉取
-                lookAndSubscribeUrl(url);
-            }
+        registry.subscribe(() -> {
+            // 重新拉取
+            lookAndSubscribeUrl(url);
         });
         return registry;
     }
@@ -231,7 +219,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
 
     @Override
     public void notify(List<URL> urls) {
-        System.out.println("订阅到消息: " + urls);
+        log.debug("[registry] 订阅到消息: {}", urls);
         this.subscribeUrls = urls;
     }
 
@@ -249,11 +237,6 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             List<RemotingClient> rpcClients = getRpcClients(urls);
             // 通过负载均衡器拉取RpcClient
             RemotingClient rpcClient = loadBalance.select(rpcClients, url, request);
-            if (!rpcClient.isOpen()) {
-                // 如果通道已经关闭，进行重连试试
-                // todo 最好做成异步重连
-                rpcClient.doConnect();
-            }
             return rpcClient;
         }
     }
@@ -293,7 +276,11 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             String client = prop.getProperty(RpcClientConfigConstant.PROTOCOL, RpcClientConfigConstant.DEFAULT_PROTOCOL);
             RemotingClient c = RemotingClientFactory.create(client);
             // 启动客户端
-            c.start(conf);
+            if (c != null) {
+                c.start(conf);
+            } else {
+                throw new RpcRemotingException("无法创建对应的 远程客户端 ， client=" + client);
+            }
             return c;
         });
     }
@@ -301,85 +288,17 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
 
     protected Request warpRequest(Object proxy, Method method, Object[] args) {
         Request request = new Request();
-        request.setVersion("v1");
-        request.setRequestParam(args);
-        request.setMethodName(method.getName());
-        request.setInterfaceType(interfaceClass);
-        request.setReturnType(method.getReturnType());
-        request.setHeartbeat(false);
+        request.setVersion("v1")
+                .setRequestParam(args)
+                .setMethodName(method.getName())
+                .setInterfaceType(interfaceClass)
+                .setReturnType(method.getReturnType())
+                .setHeartbeat(false);
         return request;
     }
 
-    /**
-     * 执行请求
-     *
-     * @param request 请求体
-     * @return Object
-     * @throws TimeoutException 重试次数达到后如果还请求不到，理应直接抛出异常
-     */
-    protected Object request(RemotingClient rpcClient, Request request) throws TimeoutException {
-        // 通过负载均衡读取到对应的rpcClient
-        // 如果请求超时，理应再从负载均衡器里拿一个连接执行重试
-        CompletableFuture<Object> future = rpcClient.getchannel().request(request, requestTimeout);
-        Object resObj = null;
-        try {
-            resObj = future.get(requestTimeout, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof RpcChannelClosedException) {
-                if (!rpcClient.isActive()) {
-                    synchronized (lock) {
-                        // 休眠100毫秒重试一下
-                        if (!rpcClient.isActive()) {
-                            try {
-                                TimeUnit.MILLISECONDS.sleep(100);
-                            } catch (InterruptedException ex) {
-                                // 不做处理
-                            }
-                            // 这里应该同步处理
-                            try {
-                                rpcClient.doConnect();
-                            } catch (RpcRemotingException ex) {
-                                throw new TimeoutException(ex.getMessage());
-                            }
-                        }
-                    }
-                }
-                // 如果连接成功,重新请求
-                if (rpcClient.isActive()) {
-                    resObj = request(rpcClient, request);
-                } else {
-                    throw new TimeoutException(e.getCause().getMessage());
-                }
-            } else {
-                throw new TimeoutException(e.getCause().getMessage());
-            }
-        }
-        return resObj;
-    }
-
-    protected Object retryRequest(RemotingClient rpcClient, Request request, int currRetry) throws TimeoutException {
-        // 负责继续请求重试
-        try {
-            Object res = request(rpcClient, request);
-            return res;
-        } catch (TimeoutException e) {
-            currRetry++;
-            // 如果超过重试次数， 直接抛异常
-            log.info("请求重试, 请求体 [{}], 当前已重试次数{}", request, currRetry);
-            if (currRetry > retry) {
-                throw new TimeoutException("请求失败， 超过最大重试次数");
-            }
-            // 休眠100毫秒重试一下
-            try {
-                TimeUnit.MILLISECONDS.sleep(100);
-            } catch (InterruptedException ex) {
-                // 不做处理
-            }
-            log.info("请求重试, 请求体 [{}], 当前已重试次数{}", request, currRetry);
-            return retryRequest(loadBalance(request), request, currRetry);
-        }
+    protected Object retryRequest(RemotingClient rpcClient, Request request) throws TimeoutException {
+        return rpcClientTemplate.retryRequest(rpcClient, request, this::loadBalance);
     }
 
     private List<URL> lookUpOfThrow() {
@@ -393,7 +312,6 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
     }
 
     public static class HeartbeatRpcInvocation implements RpcInvocation {
-
         @Override
         public Object invoke(Request request) {
             if (request.isHeartbeat()) {

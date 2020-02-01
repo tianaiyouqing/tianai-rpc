@@ -3,20 +3,14 @@ package cloud.tianai.rpc.core.client.proxy.impl;
 import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.remoting.api.Response;
-import cloud.tianai.remoting.api.exception.RpcChannelClosedException;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.core.client.proxy.AbstractRpcProxy;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @Author: 天爱有情
@@ -56,7 +50,7 @@ public class JdkRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHan
         // 负载均衡器拿到rpcClient
         RemotingClient rpcClient = loadBalance(request);
         // 执行请求
-        Object resObj = retryRequest(rpcClient, request, 0);
+        Object resObj = retryRequest(rpcClient, request);
         Response response;
         if (resObj instanceof Response) {
             response = (Response) resObj;
