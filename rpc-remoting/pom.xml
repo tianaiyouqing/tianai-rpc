@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tianai-rpc</artifactId>
         <groupId>cloud.tianai.rpc</groupId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
     </parent>
     <packaging>pom</packaging>
     <modules>
