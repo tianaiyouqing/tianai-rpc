@@ -5,50 +5,31 @@
     <parent>
         <artifactId>tianai-rpc</artifactId>
         <groupId>cloud.tianai.rpc</groupId>
-        <version>1.0</version>
+        <version>1.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <artifactId>rpc-all</artifactId>
-
 
     <dependencies>
         <!-- 远程 -->
         <dependency>
             <groupId>cloud.tianai.rpc.remoting</groupId>
             <artifactId>rpc-remoting-netty</artifactId>
-            <version>1.0</version>
         </dependency>
-
         <!-- codec -->
         <dependency>
             <groupId>cloud.tianai.rpc.remoting.codec</groupId>
             <artifactId>rpc-remoting-codec-hessian2</artifactId>
-            <version>1.0</version>
         </dependency>
-
         <dependency>
             <groupId>cloud.tianai.rpc</groupId>
             <artifactId>rpc-core</artifactId>
-            <version>1.0</version>
         </dependency>
-
-
         <!-- registry -->
         <dependency>
             <groupId>cloud.tianai.rpc.register</groupId>
             <artifactId>rpc-register-zookeeper</artifactId>
-            <version>1.0</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>log4j</artifactId>
-                    <groupId>log4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 </project>

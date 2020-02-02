@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tianai-rpc</artifactId>
         <groupId>cloud.tianai.rpc</groupId>
-        <version>1.0</version>
+        <version>1.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -15,24 +15,20 @@
         <dependency>
             <groupId>cloud.tianai.rpc</groupId>
             <artifactId>rpc-common</artifactId>
-            <version>1.0</version>
         </dependency>
 
         <dependency>
             <groupId>cloud.tianai.rpc.remoting</groupId>
             <artifactId>rpc-remoting-api</artifactId>
-            <version>1.0</version>
         </dependency>
 
         <dependency>
             <groupId>cloud.tianai.rpc.remoting.codec</groupId>
             <artifactId>rpc-remoting-codec-api</artifactId>
-            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>cloud.tianai.rpc.register</groupId>
             <artifactId>rpc-register-api</artifactId>
-            <version>1.0</version>
         </dependency>
     </dependencies>
 
