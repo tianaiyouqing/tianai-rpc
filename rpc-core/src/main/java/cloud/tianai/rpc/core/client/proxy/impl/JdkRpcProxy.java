@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Objects;
 
 /**
  * @Author: 天爱有情
@@ -30,16 +31,13 @@ public class JdkRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHan
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getDeclaringClass() == Object.class) {
-            return method.invoke(proxy, args);
-        }
         String methodName = method.getName();
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length == 0) {
             if ("toString".equals(methodName)) {
-                return proxy.toString();
+                return super.toString();
             } else if ("hashCode".equals(methodName)) {
-                return proxy.hashCode();
+                return super.hashCode();
             }
         } else if (parameterTypes.length == 1 && "equals".equals(methodName)) {
             return proxy.equals(args[0]);

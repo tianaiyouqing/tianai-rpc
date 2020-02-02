@@ -320,4 +320,15 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             return null;
         }
     }
+
+    @Override
+    public String toString() {
+        return "tianai-rpc-proxy{" +
+                "interfaceClass=" + interfaceClass +
+                ", registry=" + registry +
+                ", url=" + url +
+                ", requestTimeout=" + requestTimeout +
+                ", prop=" + prop +
+                '}';
+    }
 }
