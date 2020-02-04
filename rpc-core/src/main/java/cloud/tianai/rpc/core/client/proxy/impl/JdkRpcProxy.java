@@ -44,7 +44,7 @@ public class JdkRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHan
         }
         Request request = warpRequest(proxy, method, args);
         // 懒加载 registry
-        startRegistryIfNecessary(super.prop);
+        startRegistryIfNecessary(super.rpcConfiguration.getRegistryUrl());
         // 负载均衡器拿到rpcClient
         RemotingClient rpcClient = loadBalance(request);
         // 执行请求

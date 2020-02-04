@@ -24,6 +24,7 @@ public class RpcServerImplTest2 {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.codec("hessian2")
                     .timeout(5000)
+                    // 设置服务注册为zookeeper， 支持zookeeper和nacos两个服务注册
                     .registry(new URL("zookeeper", "127.0.0.1", 2181))
                     .server("netty")
                     .port(20881)
@@ -44,24 +45,26 @@ public class RpcServerImplTest2 {
 public class RpcClientTest {
 
     public static void main(String[] args) {
-        Properties prop = new Properties();
-        // 编码解码器
-        prop.setProperty(RpcClientConfigConstant.CODEC, "hessian2");
-        prop.setProperty(RpcClientConfigConstant.TIMEOUT, String.valueOf(5000));
-
-        // 注册器
-        prop.setProperty(RpcClientConfigConstant.REGISTER, "zookeeper");
-        prop.setProperty(RpcClientConfigConstant.REGISTRY_HOST, "192.168.1.6");
-        prop.setProperty(RpcClientConfigConstant.REGISTRY_PORT, String.valueOf(2181));
-
-        // 远程客户端，默认netty
-        prop.setProperty(RpcClientConfigConstant.PROTOCOL, "netty");
-        // 工作线程，默认cpu核心数+1
-        prop.setProperty(RpcClientConfigConstant.WORKER_THREADS, String.valueOf(1));
-        // 请求超时时间
-        prop.setProperty(RpcClientConfigConstant.REQUEST_TIMEOUT, String.valueOf(3000));
+        RpcClientConfiguration prop = new RpcClientConfiguration();
+        // 序列化，默认是hessian2
+        prop.setCodec("hessian2");
+        // 超时，默认是5000
+        prop.setTimeout(5000);
+        // 请求超时，默认是3000
+        prop.setRequestTimeout(3000);
+        // 设置客户端为netty， 默认是netty
+        prop.setProtocol("netty");
         
-        // 创建RPC代理
+        // 服务注册，目前支持 zookeeper和nacos两个， 默认是zookeeper 
+        // 设置服务注册 ， 为nacos
+        // URL nacosConf = new URL("nacos", "127.0.0.1", 8848);
+        // nacosConf = nacosConf.addParameter("namespace", "1ca3c65a-92a7-4a09-8de1-4bfe1c89d240");
+        
+        // 设置服务注册 为zookeeper
+        prop.setRegistryUrl(new URL("zookeeper", "127.0.0.1", 2181));
+        // 注册器
+
+        // 远程 客户端
         RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();
         Demo proxy = rpcProxy.createProxy(Demo.class, prop, true, true);
         for (int i = 0; i < 20; i++) {

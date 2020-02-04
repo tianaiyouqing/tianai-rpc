@@ -28,6 +28,7 @@ public interface Registry {
 
     boolean isStart();
 
+    String getProtocol();
     /**
      * 订阅
      * @param url

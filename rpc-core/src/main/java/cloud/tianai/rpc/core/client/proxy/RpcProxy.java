@@ -1,6 +1,6 @@
 package cloud.tianai.rpc.core.client.proxy;
 
-import java.util.Properties;
+import cloud.tianai.rpc.common.RpcClientConfiguration;
 
 /**
  * @Author: 天爱有情
@@ -12,10 +12,10 @@ public interface RpcProxy<T> {
     /**
      * 创建代理
      * @param interfaceClass 接口class
-     * @param prop 属性
+     * @param conf 配置
      * @param lazyLoadRegistry 懒加载服务注册
      * @param lazyStartRpcClient 懒加载rpc客户端
      * @return
      */
-    T createProxy(Class<T> interfaceClass, Properties prop, boolean lazyLoadRegistry, boolean lazyStartRpcClient);
+    T createProxy(Class<T> interfaceClass, RpcClientConfiguration conf, boolean lazyLoadRegistry, boolean lazyStartRpcClient);
 }

@@ -2,10 +2,9 @@ package cloud.tianai.rpc.registry.zookeeper;
 
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
-import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.CollectionUtils;
+import cloud.tianai.rpc.registory.api.AbstractRegistry;
 import cloud.tianai.rpc.registory.api.NotifyListener;
-import cloud.tianai.rpc.registory.api.Registry;
 import cloud.tianai.rpc.registory.api.StatusListener;
 import lombok.extern.slf4j.Slf4j;
 import org.I0Itec.zkclient.IZkChildListener;
@@ -19,7 +18,6 @@ import org.apache.zookeeper.Watcher;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @Author: 天爱有情
@@ -27,7 +25,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @Description: 基于zookeeper的注册器
  */
 @Slf4j
-public class ZookeeperRegistry implements Registry {
+public class ZookeeperRegistry extends AbstractRegistry {
+
+    public static final String PROTOCOL = "zookeeper";
 
     /**
      * 默认的根目录地址.
@@ -40,17 +40,10 @@ public class ZookeeperRegistry implements Registry {
      */
     private Map<NotifyListener, IZkChildListener> notifyListenerZkDataListenerMap = new HashMap<>(32);
 
-    private Set<StatusListener> statusListenerSet = new CopyOnWriteArraySet<>();
-
     /**
      * zk集群时使用，暂时不用.
      */
     public static final String GROUP_KEY = "group";
-
-    /**
-     * 创建zookeeper时需要的url地址.
-     */
-    private URL zookeeperUrl;
 
     /**
      * zookeeper客户端.
@@ -60,45 +53,53 @@ public class ZookeeperRegistry implements Registry {
      * 根目录.
      */
     private String root;
-
-    private AtomicBoolean start = new AtomicBoolean(false);
-
     private Map<URL, Object> registryCache = new ConcurrentHashMap<>(16);
 
-    private static final Object EMPTY_VALUE = new Object();
-
     @Override
-    public Registry start(URL url) {
-        if (!start.compareAndSet(false, true)) {
-            throw new RpcException("已经启动，不可重复启动");
-        }
-        try {
-            this.zookeeperUrl = url;
-            init();
-        } catch (Exception e) {
-            // 启动设置为false
-            start.set(false);
-            throw e;
-        }
-        return this;
-    }
-
-    @Override
-    public void shutdown() {
+    protected void doShutdown() {
         if (zkClient != null) {
             zkClient.close();
         }
         notifyListenerZkDataListenerMap.clear();
-        start.set(false);
+    }
+
+    @Override
+    protected void doStart(URL url) {
+        try {
+            init();
+        } catch (Exception e) {
+            // 启动设置为false
+            throw e;
+        }
+    }
+
+    @Override
+    protected void innerRegister(URL url) {
+        try {
+            try {
+                String path = getPath(url);
+                create(path + PATH_SEPARATOR + URL.encode(url.toString()));
+            } catch (Exception e) {
+                throw new IllegalStateException(e.getMessage(), e);
+            }
+        } catch (ZkNoNodeException e) {
+            // 创建
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    protected void doSubscribe(StatusListener statusListener) {
+
     }
 
     private void init() {
         // todo zookeeperRegistry 这是暂时先设置为单机版
-        String address = zookeeperUrl.getAddress();
-        int timeout = Integer.parseInt(zookeeperUrl.getParameter("timeout", String.valueOf(5000)));
+        String address = getRegistryUrl().getAddress();
+        int timeout = Integer.parseInt(getRegistryUrl().getParameter("timeout", String.valueOf(5000)));
         zkClient = new ZkClient(address, timeout);
-        zkClient.subscribeStateChanges(new WatcherListener(statusListenerSet));
-        this.root = zookeeperUrl.getParameter(GROUP_KEY, DEFAULT_ROOT);
+        zkClient.subscribeStateChanges(new WatcherListener(getStatusListenerSet()));
+        this.root = getRegistryUrl().getParameter(GROUP_KEY, DEFAULT_ROOT);
         // 判断根节点是否存在，如果不存在则创建， 创建类型必须是持久类型的
         createNodeIfNecessary(this.root, CreateMode.PERSISTENT);
         //todo 启动一个守护线程定时清除为空的持久数据
@@ -111,37 +112,6 @@ public class ZookeeperRegistry implements Registry {
         zkClient.create(node, null, createMode);
     }
 
-
-    @Override
-    public Result<?> register(URL url) {
-        return register(url, true);
-    }
-
-    public Result<?> register(URL url, boolean cache) {
-        try {
-            try {
-                String path = getPath(url);
-                create(path + PATH_SEPARATOR + URL.encode(url.toString()));
-            } catch (Exception e) {
-                throw new IllegalStateException(e.getMessage(), e);
-            }
-        } catch (ZkNoNodeException e) {
-            // 创建
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-        if (cache) {
-            registryCache.remove(url);
-            registryCache.put(url, EMPTY_VALUE);
-        }
-        return Result.ofSuccess("success");
-    }
-
-    public void reRegister() {
-        for (URL url : registryCache.keySet()) {
-            log.info("zookeeper reRegister, url={}", url);
-            register(url, false);
-        }
-    }
 
     private String getPath(URL url) {
         return toRootPath() + PATH_SEPARATOR + url.getServiceInterface();
@@ -168,8 +138,8 @@ public class ZookeeperRegistry implements Registry {
     }
 
     @Override
-    public boolean isStart() {
-        return start.get();
+    public String getProtocol() {
+        return PROTOCOL;
     }
 
     @Override
@@ -183,11 +153,6 @@ public class ZookeeperRegistry implements Registry {
         ZkChildListenerAdapter zkChildListenerAdapter = new ZkChildListenerAdapter(listener);
         zkClient.subscribeChildChanges(path, zkChildListenerAdapter);
         notifyListenerZkDataListenerMap.put(listener, zkChildListenerAdapter);
-    }
-
-    @Override
-    public void subscribe(StatusListener statusListener) {
-        statusListenerSet.add(statusListener);
     }
 
     @Override
@@ -205,7 +170,7 @@ public class ZookeeperRegistry implements Registry {
                 zkClient.close();
                 zkClient = null;
             } catch (Exception e) {
-                log.error("the service zk close faild info={}", zookeeperUrl);
+                log.error("the service zk close faild info={}", getRegistryUrl());
             }
         }
     }
@@ -264,7 +229,7 @@ public class ZookeeperRegistry implements Registry {
 
         @Override
         public void handleStateChanged(Watcher.Event.KeeperState state) {
-            log.info("handleStateChanged() ===> {}",  state);
+            log.info("handleStateChanged() ===> {}", state);
             if (Watcher.Event.KeeperState.Expired == state || Watcher.Event.KeeperState.Disconnected == state) {
                 log.info("重连zookeeper ===> ");
                 reConnected();

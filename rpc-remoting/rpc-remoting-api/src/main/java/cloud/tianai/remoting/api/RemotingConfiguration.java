@@ -32,4 +32,6 @@ public class RemotingConfiguration {
     private ExecutorService threadPool;;
     /** 心跳超时. */
     private Integer idleTimeout = 6000;
+
+
 }

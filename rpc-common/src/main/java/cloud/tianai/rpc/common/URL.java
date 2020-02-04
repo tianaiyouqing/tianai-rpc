@@ -446,7 +446,19 @@ public final class URL implements Serializable {
         return defaultValue;
     }
 
-    public void addParameter(String key, String value) {
-        parameters.put(key, value);
+
+    public URL addParameter(String key, String value) {
+        if (StringUtils.isEmpty(key)
+                || StringUtils.isEmpty(value)) {
+            return this;
+        }
+        // if value doesn't change, return immediately
+        if (value.equals(getParameters().get(key))) { // value != null
+            return this;
+        }
+
+        Map<String, String> map = new HashMap<>(getParameters());
+        map.put(key, value);
+        return new URL(protocol, username, password, host, port, path, map);
     }
 }

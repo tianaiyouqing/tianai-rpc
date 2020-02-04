@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tianai-rpc</artifactId>
         <groupId>cloud.tianai.rpc</groupId>
-        <version>1.0.2</version>
+        <version>1.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -15,37 +15,37 @@
         <dependency>
             <groupId>cloud.tianai.rpc.remoting</groupId>
             <artifactId>rpc-remoting-netty</artifactId>
-            <version>1.0.2</version>
+            <version>1.1</version>
         </dependency>
         <dependency>
             <groupId>cloud.tianai.rpc.remoting.codec</groupId>
             <artifactId>rpc-remoting-codec-hessian2</artifactId>
-            <version>1.0.2</version>
+            <version>1.1</version>
         </dependency>
 
 
         <dependency>
             <groupId>cloud.tianai.rpc</groupId>
             <artifactId>rpc-core</artifactId>
-            <version>1.0.2</version>
+            <version>1.1</version>
         </dependency>
 
 
         <dependency>
             <groupId>cloud.tianai.rpc.remoting.codec</groupId>
             <artifactId>rpc-remoting-codec-hessian2</artifactId>
-            <version>1.0.2</version>
+            <version>1.1</version>
         </dependency>
 
         <dependency>
             <groupId>cloud.tianai.rpc.remoting</groupId>
             <artifactId>rpc-remoting-netty</artifactId>
-            <version>1.0.2</version>
+            <version>1.1</version>
         </dependency>
         <dependency>
             <groupId>cloud.tianai.rpc.register</groupId>
             <artifactId>rpc-register-zookeeper</artifactId>
-            <version>1.0.2</version>
+            <version>1.1</version>
             <exclusions>
                 <exclusion>
                     <artifactId>log4j</artifactId>
@@ -58,6 +58,11 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>cloud.tianai.rpc.register</groupId>
+            <artifactId>rpc-register-nacos</artifactId>
+            <version>1.1</version>
+        </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>

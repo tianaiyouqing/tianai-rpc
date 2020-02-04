@@ -13,6 +13,7 @@ public class RegistryFactory {
     static {
         try {
             addRegistry("zookeeper", "cloud.tianai.rpc.registry.zookeeper.ZookeeperRegistry");
+            addRegistry("nacos", "cloud.tianai.rpc.register.nacos.NacosRegistry");
         } catch (ClassNotFoundException e) {
 
         }

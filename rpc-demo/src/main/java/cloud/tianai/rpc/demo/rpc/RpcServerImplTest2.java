@@ -13,10 +13,12 @@ public class RpcServerImplTest2 {
 
     public static void main(String[] args) throws InterruptedException {
         new Thread(() -> {
+            URL nacosConf = new URL("nacos", "127.0.0.1", 8848);
+            nacosConf = nacosConf.addParameter("namespace", "1ca3c65a-92a7-4a09-8de1-4bfe1c89d240");
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.codec("hessian2")
                     .timeout(5000)
-                    .registry(new URL("zookeeper", "127.0.0.1", 2181))
+                    .registry(nacosConf)
                     .server("netty")
                     .port(20883)
                     .register(Demo.class, new DemoImpl())
