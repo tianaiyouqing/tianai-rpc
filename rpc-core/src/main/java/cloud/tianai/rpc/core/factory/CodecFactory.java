@@ -24,18 +24,6 @@ public class CodecFactory {
     private static Map<String, KeyValue<Class<? extends RemotingDataEncoder>, Class<? extends RemotingDataDecoder>>> codecClassMap
             = new HashMap<>(2);
 
-    static {
-        // 注册一些默认的codec
-        try {
-            // 注册 hessian2
-            registerCodec("hessian2",
-                    "cloud.tianai.remoting.codec.hessian2.Hessian2Encoder",
-                    "cloud.tianai.remoting.codec.hessian2.Hessian2Decoder");
-        } catch (ClassNotFoundException e) {
-            // 不做处理
-        }
-    }
-
     public static void registerCodec(String protocol, String encoderClassStr, String decoderClassStr) throws ClassNotFoundException {
 
         Class<?> encoderClass = ClassUtils.forName(encoderClassStr);

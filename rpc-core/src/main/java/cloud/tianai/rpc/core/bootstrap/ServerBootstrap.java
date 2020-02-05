@@ -7,6 +7,7 @@ import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.IPUtils;
 import cloud.tianai.rpc.core.factory.CodecFactory;
+import cloud.tianai.rpc.core.loader.RpcPropertiesLoader;
 import cloud.tianai.rpc.core.factory.RemotingServerFactory;
 import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcServerHolder;
@@ -98,6 +99,8 @@ public class ServerBootstrap {
         if (!start.compareAndSet(false, true)) {
             throw new RpcException("该服务已经启动，请勿重复启动[host=" + prop.getHost() + ", port=" + prop.getPort() + "]");
         }
+        // 加载一下配置
+        RpcPropertiesLoader.loadIfNecessary();
         // 启动远程server
         startRemotingServer();
         // 启动远程注册器

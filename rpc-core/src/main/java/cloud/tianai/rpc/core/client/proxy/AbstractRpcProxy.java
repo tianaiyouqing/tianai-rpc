@@ -6,6 +6,8 @@ import cloud.tianai.rpc.common.*;
 import cloud.tianai.rpc.common.constant.CommonConstant;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.CollectionUtils;
+import cloud.tianai.rpc.common.util.IPUtils;
+import cloud.tianai.rpc.core.loader.RpcPropertiesLoader;
 import cloud.tianai.rpc.core.factory.LoadBalanceFactory;
 import cloud.tianai.rpc.core.factory.RemotingClientFactory;
 import cloud.tianai.rpc.core.holder.RegistryHolder;
@@ -110,7 +112,9 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         }
         this.rpcConfiguration = conf;
         this.interfaceClass = interfaceClass;
-        this.url = new URL("tianai-rpc", "127.0.0.1", 0, interfaceClass.getName());
+        this.url = new URL("tianai-rpc", IPUtils.getHostIp(), 0, interfaceClass.getName());
+        // 加载一下配置
+        RpcPropertiesLoader.loadIfNecessary();
         if (!lazyLoadRegistry) {
             this.registry = startRegistry(conf.getRegistryUrl());
             if (!lazyStartRpcClient) {

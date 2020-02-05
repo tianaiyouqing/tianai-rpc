@@ -10,15 +10,6 @@ public class RegistryFactory {
 
     private static Map<String, Class<? extends Registry>> registryClassMap = new HashMap<>(2);
 
-    static {
-        try {
-            addRegistry("zookeeper", "cloud.tianai.rpc.registry.zookeeper.ZookeeperRegistry");
-            addRegistry("nacos", "cloud.tianai.rpc.register.nacos.NacosRegistry");
-        } catch (ClassNotFoundException e) {
-
-        }
-    }
-
     public static void addRegistry(String protocol, Class<? extends Registry> registryClass) {
         registryClassMap.remove(protocol);
         registryClassMap.put(protocol, registryClass);

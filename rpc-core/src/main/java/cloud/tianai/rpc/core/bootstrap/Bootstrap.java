@@ -4,6 +4,7 @@ import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.RemotingConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
+import cloud.tianai.rpc.core.loader.RpcPropertiesLoader;
 import cloud.tianai.rpc.core.factory.RemotingClientFactory;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
 
@@ -47,6 +48,9 @@ public class Bootstrap {
     }
 
     public RemotingClient start(URL url) throws RpcException {
+        // 加载一下配置
+        RpcPropertiesLoader.loadIfNecessary();
+
         if (start.compareAndSet(false, true)) {
             try {
                 this.url = url;

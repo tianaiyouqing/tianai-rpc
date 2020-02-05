@@ -37,4 +37,8 @@ public class ClassUtils {
         return forName(classStr, Thread.currentThread().getContextClassLoader());
     }
 
+    public static ClassLoader getClassLoader() {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        return classLoader;
+    }
 }

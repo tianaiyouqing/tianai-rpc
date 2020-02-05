@@ -16,15 +16,6 @@ import java.util.Objects;
 public class RemotingClientFactory {
     private static Map<String, Class<? extends RemotingClient>> remotingServerMap = new HashMap<>(2);
 
-    static {
-        try {
-            // 注册netty客户端
-            addRemotingServer("netty", "cloud.tianai.remoting.netty.NettyClient");
-        } catch (ClassNotFoundException e) {
-            // 不做处理
-        }
-    }
-
     public static RemotingClient create(String protocol) {
         Class<? extends RemotingClient> remotingClientClazz = remotingServerMap.get(protocol);
         if (Objects.isNull(remotingClientClazz)) {
@@ -44,12 +35,12 @@ public class RemotingClientFactory {
         }
     }
 
-    public static void addRemotingServer(String protocol, Class<? extends RemotingClient> clientClass) {
+    public static void addRemotingClient(String protocol, Class<? extends RemotingClient> clientClass) {
         remotingServerMap.remove(protocol);
         remotingServerMap.put(protocol, clientClass);
     }
 
-    public static void addRemotingServer(String protocol, String clientClassStr) throws ClassNotFoundException {
+    public static void addRemotingClient(String protocol, String clientClassStr) throws ClassNotFoundException {
         Class<?> clazz = ClassUtils.forName(clientClassStr);
         if (!RemotingClient.class.isAssignableFrom(clazz) || clazz.isInterface()) {
             // 如果不是 RemotingServer 的子类，或者是个接口，则直接报错
@@ -57,6 +48,6 @@ public class RemotingClientFactory {
         }
 
         //noinspection unchecked
-        addRemotingServer(protocol, (Class<? extends RemotingClient>) clazz);
+        addRemotingClient(protocol, (Class<? extends RemotingClient>) clazz);
     }
 }

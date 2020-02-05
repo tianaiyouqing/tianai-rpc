@@ -18,16 +18,6 @@ public class RemotingServerFactory {
     private static Map<String, Class<? extends RemotingServer>> remotingServerMap = new HashMap<>(2);
     private static final String SPLIT = ":";
 
-    static {
-        try {
-            // 注册netty服务器
-            addRemotingServer("netty", "cloud.tianai.remoting.netty.NettyServer");
-        } catch (ClassNotFoundException e) {
-            // 不做处理
-        }
-    }
-
-
     private static String getKey(String protocol, String host, Integer port) {
         return protocol.concat(SPLIT).concat(host).concat(SPLIT).concat(String.valueOf(port));
     }
