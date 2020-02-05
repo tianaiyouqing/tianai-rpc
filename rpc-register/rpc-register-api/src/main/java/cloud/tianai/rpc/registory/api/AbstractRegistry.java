@@ -2,7 +2,7 @@ package cloud.tianai.rpc.registory.api;
 
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
-import exception.RpcRegistryException;
+import cloud.tianai.rpc.registory.api.exception.RpcRegistryException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

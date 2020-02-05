@@ -1,4 +1,4 @@
-package cloud.tianai.rpc.common;
+package cloud.tianai.rpc.common.constant;
 
 /**
  * @Author: 天爱有情
@@ -9,6 +9,7 @@ public interface CommonConstant {
 
     /** 重试. */
     String RETRY = "retry";
+    String BACKUP_KEY = "backup";
 
     String DEFAULT_CODEC = "hessian2";
     String DEFAULT_PROTOCOL = "netty";

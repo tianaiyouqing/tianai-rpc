@@ -1,5 +1,6 @@
 package cloud.tianai.rpc.common;
 
+import cloud.tianai.rpc.common.constant.CommonConstant;
 import lombok.Data;
 
 @Data

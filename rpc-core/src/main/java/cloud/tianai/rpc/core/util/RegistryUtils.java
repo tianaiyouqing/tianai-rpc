@@ -2,7 +2,7 @@ package cloud.tianai.rpc.core.util;
 
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
-import cloud.tianai.rpc.common.CommonConstant;
+import cloud.tianai.rpc.common.constant.CommonConstant;
 import cloud.tianai.rpc.core.factory.RegistryFactory;
 import cloud.tianai.rpc.registory.api.Registry;
 import lombok.extern.slf4j.Slf4j;
