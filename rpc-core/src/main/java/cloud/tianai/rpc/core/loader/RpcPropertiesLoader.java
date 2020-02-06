@@ -10,12 +10,13 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @Author: 天爱有情
@@ -24,9 +25,12 @@ import java.util.function.Consumer;
  */
 @Slf4j
 public class RpcPropertiesLoader {
-    public static final String PROPERTIES_PATH = "META-INF/tianai-rpc.properties";
-    public static final String SPLIT = ",";
 
+    /** properties路径. */
+    public static final String PROPERTIES_PATH = "META-INF/tianai-rpc.properties";
+    /** 逗号分隔的正则表达式. */
+    public static final Pattern SPLIT_PATTERN = Pattern.compile("\\s*[,]+\\s*");
+    /** 是否已加载，如果已加载则不会再加载. */
     private static AtomicBoolean load = new AtomicBoolean(false);
     @Getter
     private static List<URL> loadUrls;
@@ -128,14 +132,10 @@ public class RpcPropertiesLoader {
             // 不为空才调用consumer方法
             List<String[]> res = new ArrayList<>(propData.size());
             for (String propDatum : propData) {
-                String[] split = propDatum.split(SPLIT);
+                String[] split = SPLIT_PATTERN.split(propDatum);
                 if (split.length != splitLen) {
                     throw new IllegalStateException("解析 [tianai-rpc.properties] 失败， 匹配规则错误，" +
-                            " data=" + propDatum + ", splitLen=" + splitLen + ", splitFlag=" + SPLIT);
-                }
-                // 去一下空格
-                for (int i = 0; i < split.length; i++) {
-                    split[i] = split[i].trim();
+                            " data=" + propDatum + ", splitLen=" + splitLen + ", splitFlag=" + SPLIT_PATTERN);
                 }
                 res.add(split);
             }
