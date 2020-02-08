@@ -97,7 +97,6 @@ public class ZookeeperRegistry extends AbstractRegistry {
     }
 
     private void init(int currentRetryCount, int retryCount) throws TimeoutException {
-        // todo zookeeperRegistry 这是暂时先设置为单机版
         String address = getRegistryUrl().getAddress();
         int timeout = Integer.parseInt(getRegistryUrl().getParameter("timeout", String.valueOf(0)));
         try {
@@ -270,7 +269,6 @@ public class ZookeeperRegistry extends AbstractRegistry {
 
         private void reConnected() {
             try {
-                System.out.println("执行reConnect");
                 ZookeeperRegistry.this.destroy();
                 try {
                     //wait for the zk server start success!
