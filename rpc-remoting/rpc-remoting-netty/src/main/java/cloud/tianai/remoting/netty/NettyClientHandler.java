@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 public class NettyClientHandler extends ChannelDuplexHandler {
     private RemotingDataProcessor remotingDataProcessor;
     private NettyChannelAdapter channelAdapter;
+
     public NettyClientHandler(RemotingDataProcessor remotingDataProcessor) {
         this.remotingDataProcessor = remotingDataProcessor;
     }
@@ -24,7 +25,7 @@ public class NettyClientHandler extends ChannelDuplexHandler {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
-        channelAdapter = new NettyChannelAdapter(ctx.channel());;
+        channelAdapter = new NettyChannelAdapter(ctx.channel());
     }
 
     @Override
@@ -34,11 +35,7 @@ public class NettyClientHandler extends ChannelDuplexHandler {
             remotingDataProcessor.readMessage(channelAdapter, msg, ctx);
         } else {
             // 负责使用默认通道继续执行
-            try {
-                ctx.fireChannelRead(msg);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            ctx.fireChannelRead(msg);
         }
     }
 

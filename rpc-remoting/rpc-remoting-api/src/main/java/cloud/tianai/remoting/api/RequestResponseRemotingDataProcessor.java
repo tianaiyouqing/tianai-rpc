@@ -6,7 +6,8 @@ package cloud.tianai.remoting.api;
  * @Description: Request And Response 数据解析器
  */
 public class RequestResponseRemotingDataProcessor implements RemotingDataProcessor {
-
+    /** 心跳直接返回的数据. */
+    public static final String HEARTBEAT_RESULT = "heartbeat success";
     private RpcInvocation rpcInvocation;
 
     public RequestResponseRemotingDataProcessor(RpcInvocation rpcInvocation) {
@@ -15,7 +16,6 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
 
     @Override
     public void readMessage(Channel channel, Object msg, Object extend) {
-        // 这里改成异步执行试试
         if (msg instanceof Request) {
             // 解析Request
             Response response = processRequest((Request) msg);
@@ -31,7 +31,7 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
         Object result;
         if (request.isHeartbeat()) {
             // 如果是心跳请求，直接返回
-            result = "heartbeat success";
+            result = HEARTBEAT_RESULT;
         } else {
             try {
                 result = rpcInvocation.invoke(copyReq);
