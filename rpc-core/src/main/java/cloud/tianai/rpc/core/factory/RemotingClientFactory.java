@@ -7,6 +7,7 @@ import cloud.tianai.rpc.common.util.ClassUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author: 天爱有情
@@ -14,7 +15,8 @@ import java.util.Objects;
  * @Description: 远程客户端工厂
  */
 public class RemotingClientFactory {
-    private static Map<String, Class<? extends RemotingClient>> remotingServerMap = new HashMap<>(2);
+
+    private static Map<String, Class<? extends RemotingClient>> remotingServerMap = new ConcurrentHashMap<>(2);
 
     public static RemotingClient create(String protocol) {
         Class<? extends RemotingClient> remotingClientClazz = remotingServerMap.get(protocol);

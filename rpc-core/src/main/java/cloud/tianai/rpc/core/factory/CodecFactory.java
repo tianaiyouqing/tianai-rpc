@@ -6,11 +6,10 @@ import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author: 天爱有情
@@ -19,7 +18,7 @@ import java.util.function.Function;
  */
 public class CodecFactory {
 
-    private static Map<String, KeyValue<RemotingDataEncoder, RemotingDataDecoder>> codecCache = new HashMap<>(2);
+    private static Map<String, KeyValue<RemotingDataEncoder, RemotingDataDecoder>> codecCache = new ConcurrentHashMap<>(2);
 
     private static Map<String, KeyValue<Class<? extends RemotingDataEncoder>, Class<? extends RemotingDataDecoder>>> codecClassMap
             = new HashMap<>(2);
@@ -29,11 +28,11 @@ public class CodecFactory {
         Class<?> encoderClass = ClassUtils.forName(encoderClassStr);
         Class<?> decoderClass = ClassUtils.forName(decoderClassStr);
 
-        if(!RemotingDataEncoder.class.isAssignableFrom(encoderClass)) {
+        if (!RemotingDataEncoder.class.isAssignableFrom(encoderClass)) {
             // 不是encoder
             throw new IllegalArgumentException("传入的encoder必须实现 [RemotingDataEncoder] 接口");
         }
-        if(!RemotingDataDecoder.class.isAssignableFrom(decoderClass)) {
+        if (!RemotingDataDecoder.class.isAssignableFrom(decoderClass)) {
             // 不是decoder
             throw new IllegalArgumentException("传入的decoder必须实现 [RemotingDataDecoder] 接口");
         }
@@ -42,6 +41,7 @@ public class CodecFactory {
         Class<? extends RemotingDataDecoder> decoderClassCast = (Class<? extends RemotingDataDecoder>) decoderClass;
         registerCodec(protocol, encoderClassCast, decoderClassCast);
     }
+
     public static void registerCodec(String protocol,
                                      Class<? extends RemotingDataEncoder> encoderClass,
                                      Class<? extends RemotingDataDecoder> decoderClass) throws ClassNotFoundException {
@@ -50,28 +50,28 @@ public class CodecFactory {
     }
 
     public static KeyValue<RemotingDataEncoder, RemotingDataDecoder> getCodec(String protocol) {
-        KeyValue<RemotingDataEncoder, RemotingDataDecoder> res;
-        if (!Objects.isNull(res = codecCache.get(protocol))) {
-            return res;
-        }
-        // todo 可能会导致创建多次，建议加锁
-        KeyValue<Class<? extends RemotingDataEncoder>, Class<? extends RemotingDataDecoder>> codecClass = codecClassMap.get(protocol);
-        if (codecClass != null && codecClass.isNotEmpty()) {
-            Class<? extends RemotingDataEncoder> encoder = codecClass.getKey();
-            Class<? extends RemotingDataDecoder> decoder = codecClass.getValue();
-            try {
-                res = getCodec(protocol, encoder, decoder);
-                codecClassMap.remove(protocol);
-            } catch (Exception e) {
-                e.printStackTrace();
+        KeyValue<RemotingDataEncoder, RemotingDataDecoder> result = codecCache.computeIfAbsent(protocol, (p) -> {
+            KeyValue<Class<? extends RemotingDataEncoder>, Class<? extends RemotingDataDecoder>> codecClass
+                    = codecClassMap.get(protocol);
+            KeyValue<RemotingDataEncoder, RemotingDataDecoder> res = null;
+            if (codecClass != null && codecClass.isNotEmpty()) {
+                Class<? extends RemotingDataEncoder> encoder = codecClass.getKey();
+                Class<? extends RemotingDataDecoder> decoder = codecClass.getValue();
+                try {
+                    res = getCodec(protocol, encoder, decoder);
+                    codecClassMap.remove(protocol);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
-        return res;
+            return res;
+        });
+        return result;
     }
 
-    public static KeyValue<RemotingDataEncoder, RemotingDataDecoder> getCodec(String protocol,
-                                                                              Class<? extends RemotingDataEncoder> encoderClass,
-                                                                              Class<? extends RemotingDataDecoder> decoderClass) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    private static KeyValue<RemotingDataEncoder, RemotingDataDecoder> getCodec(String protocol,
+                                                                               Class<? extends RemotingDataEncoder> encoderClass,
+                                                                               Class<? extends RemotingDataDecoder> decoderClass) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         KeyValue<RemotingDataEncoder, RemotingDataDecoder> res;
         if (!Objects.isNull(res = codecCache.get(protocol))) {
             return res;
@@ -85,6 +85,5 @@ public class CodecFactory {
         codecCache.put(protocol, res);
         return res;
     }
-
 
 }

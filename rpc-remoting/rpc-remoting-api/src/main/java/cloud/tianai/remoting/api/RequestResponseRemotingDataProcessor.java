@@ -1,31 +1,18 @@
 package cloud.tianai.remoting.api;
 
-import cloud.tianai.rpc.common.threadpool.NamedThreadFactory;
-
-import java.util.concurrent.*;
-
+/**
+ * @Author: 天爱有情
+ * @Date: 2020/02/08 18:03
+ * @Description: Request And Response 数据解析器
+ */
 public class RequestResponseRemotingDataProcessor implements RemotingDataProcessor {
 
     private RpcInvocation rpcInvocation;
 
-    ExecutorService executorService;
     public RequestResponseRemotingDataProcessor(RpcInvocation rpcInvocation) {
-        this(rpcInvocation, 200, 200);
-    }
-
-
-    public RequestResponseRemotingDataProcessor(RpcInvocation rpcInvocation,
-                                                Integer corePoolSize,
-                                                Integer maximumPoolSize) {
         this.rpcInvocation = rpcInvocation;
-        executorService = new ThreadPoolExecutor(corePoolSize,
-                maximumPoolSize,
-                0,
-                TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(1024),
-                new NamedThreadFactory("tianai-rpc", true),
-                new ThreadPoolExecutor.AbortPolicy());
     }
+
     @Override
     public void readMessage(Channel channel, Object msg, Object extend) {
         // 这里改成异步执行试试
@@ -42,10 +29,10 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
     private Response processRequest(Request request) {
         Request copyReq = Request.copyRequest(request);
         Object result;
-        if(request.isHeartbeat()) {
+        if (request.isHeartbeat()) {
             // 如果是心跳请求，直接返回
             result = "heartbeat success";
-        }else {
+        } else {
             try {
                 result = rpcInvocation.invoke(copyReq);
             } catch (Throwable e) {
@@ -55,7 +42,7 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
                 return warpResponse(e, request);
             }
         }
-       return warpResponse(result, request);
+        return warpResponse(result, request);
     }
 
     private Response warpResponse(Throwable e, Request request) {

@@ -7,6 +7,7 @@ import cloud.tianai.rpc.common.constant.CommonConstant;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.CollectionUtils;
 import cloud.tianai.rpc.common.util.IPUtils;
+import cloud.tianai.rpc.core.factory.CodecFactory;
 import cloud.tianai.rpc.core.loader.RpcPropertiesLoader;
 import cloud.tianai.rpc.core.factory.LoadBalanceFactory;
 import cloud.tianai.rpc.core.factory.RemotingClientFactory;
@@ -28,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-
-import static cloud.tianai.rpc.core.factory.CodecFactory.getCodec;
 
 /**
  * @Author: 天爱有情
@@ -116,7 +115,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         // 加载一下配置
         RpcPropertiesLoader.loadIfNecessary();
         if (!lazyLoadRegistry) {
-            this.registry = startRegistry(conf.getRegistryUrl());
+            this.registry = startRegistryIfNecessary(conf.getRegistryUrl());
             if (!lazyStartRpcClient) {
                 // 读取到注册到注册器中的url
                 List<URL> urls = lookUpOfThrow();
@@ -156,24 +155,13 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
      * @param registryUrl
      * @return
      */
-    protected Registry startRegistry(URL registryUrl) {
+    protected Registry startRegistryIfNecessary(URL registryUrl) {
         Registry registry = RegistryHolder.computeIfAbsent(registryUrl, RegistryUtils::createAndStart);
         registry.subscribe(() -> {
             // 重新拉取
             lookAndSubscribeUrl(url);
         });
         return registry;
-    }
-
-
-    public void startRegistryIfNecessary(URL registryUrl) {
-        if (registry == null) {
-            synchronized (lock) {
-                if (registry == null) {
-                    registry = startRegistry(registryUrl);
-                }
-            }
-        }
     }
 
     @Override
@@ -218,7 +206,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
             Integer port = url.getPort();
             int workThreads = rpcConfiguration.getWorkerThread();
             String codecProtocol = rpcConfiguration.getOrDefault(rpcConfiguration.getCodec(), CommonConstant.DEFAULT_CODEC);
-            KeyValue<RemotingDataEncoder, RemotingDataDecoder> codec = getCodec(codecProtocol);
+            KeyValue<RemotingDataEncoder, RemotingDataDecoder> codec = CodecFactory.getCodec(codecProtocol);
             if (codec == null || !codec.isNotEmpty()) {
                 throw new RpcException("未找到对应的codec， protocol=" + codecProtocol);
             }

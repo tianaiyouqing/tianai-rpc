@@ -6,6 +6,11 @@ import cloud.tianai.rpc.registory.api.Registry;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @Author: 天爱有情
+ * @Date: 2020/02/08 17:59
+ * @Description: 服务注册工厂
+ */
 public class RegistryFactory {
 
     private static Map<String, Class<? extends Registry>> registryClassMap = new HashMap<>(2);

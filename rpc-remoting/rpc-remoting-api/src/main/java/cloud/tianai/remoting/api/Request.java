@@ -1,6 +1,5 @@
 package cloud.tianai.remoting.api;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
