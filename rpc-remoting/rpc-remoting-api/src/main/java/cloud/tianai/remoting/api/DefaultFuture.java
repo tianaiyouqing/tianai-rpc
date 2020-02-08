@@ -10,6 +10,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * @Author: 天爱有情
+ * @Date: 2020/02/08 14:52
+ * @Description: future
+ */
 @Slf4j
 @Data
 public class DefaultFuture extends CompletableFuture<Object> {
@@ -60,55 +65,17 @@ public class DefaultFuture extends CompletableFuture<Object> {
         if (res == null) {
             throw new IllegalStateException("response cannot be null");
         }
-//        if (res.getStatus() == Response.OK) {
         this.complete(res);
-//        } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
-//            this.completeExceptionally(new TimeoutException(res.getErrorMessage()));
-//        } else {
-//            this.completeExceptionally(new RpcRemotingException(res.getErrorMessage()));
-//        }
     }
 
     public static DefaultFuture newFuture(Channel channel, Request request, int timeout) {
         final DefaultFuture future = new DefaultFuture(channel, request, timeout);
-        // timeout check
-//        timeoutCheck(future);
         return future;
     }
 
     public static DefaultFuture newFuture(Channel channel, Request request, int timeout, ExecutorService executor) {
         final DefaultFuture future = new DefaultFuture(channel, request, timeout);
         future.setExecutor(executor);
-        // timeout check
-//        timeoutCheck(future);
         return future;
     }
-
-//    private static class TimeoutCheckTask implements TimerTask {
-//
-//        private final Long requestID;
-//
-//        TimeoutCheckTask(Long requestID) {
-//            this.requestID = requestID;
-//        }
-//
-//        @Override
-//        public void run(Timeout timeout) {
-//            DefaultFuture future = DefaultFuture.getFuture(requestID);
-//            if (future == null || future.isDone()) {
-//                return;
-//            }
-//            if (future.getExecutor() != null) {
-//                future.getExecutor().execute(() -> {
-//                    // create exception response.
-//                    Response timeoutResponse = new Response(future.getId());
-//                    // set timeout status.
-//                    timeoutResponse.setStatus(future.isSent() ? Response.SERVER_TIMEOUT : Response.CLIENT_TIMEOUT);
-//                    timeoutResponse.setErrorMessage(future.getTimeoutMessage(true));
-//                    // handle response.
-//                    DefaultFuture.received(future.getChannel(), timeoutResponse, true);
-//                });
-//            }
-//        }
-//    }
 }

@@ -8,6 +8,7 @@ import cloud.tianai.rpc.common.util.CollectionUtils;
 import cloud.tianai.rpc.registory.api.AbstractRegistry;
 import cloud.tianai.rpc.registory.api.NotifyListener;
 import cloud.tianai.rpc.registory.api.StatusListener;
+import cloud.tianai.rpc.registory.api.exception.RpcRegistryException;
 import com.alibaba.nacos.api.NacosFactory;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingService;
@@ -15,7 +16,6 @@ import com.alibaba.nacos.api.naming.listener.Event;
 import com.alibaba.nacos.api.naming.listener.EventListener;
 import com.alibaba.nacos.api.naming.listener.NamingEvent;
 import com.alibaba.nacos.api.naming.pojo.Instance;
-import cloud.tianai.rpc.registory.api.exception.RpcRegistryException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -40,19 +40,17 @@ import static com.alibaba.nacos.client.naming.utils.UtilAndComs.NACOS_NAMING_LOG
 public class NacosRegistry extends AbstractRegistry {
 
     public static final String PROTOCOL = "nacos";
-//    public static final int DEFAULT_RETRY_COUNT = 30;
-    private static final Object LOCK = new Object();
-
     public static final String NACOS_UP_STATUS = "UP";
     public static final String NACOS_DOWN_STATUS = "DOWN";
     public static final String URL_TO_STRING = "url-toString";
+    public static final String DEFAULT_GROUP_NAME = "DEFAULT_GROUP";
+    private String groupName = DEFAULT_GROUP_NAME;
 
     ScheduledExecutorService scheduledExecutorService;
-    private String groupName = "DEFAULT_GROUP";
+
 
     private Map<NotifyListener, EventListenerAdapter> listenerAdapterMap = new ConcurrentHashMap<>(16);
 
-//    private Integer retryCount = DEFAULT_RETRY_COUNT;
     private AtomicBoolean statusThread = new AtomicBoolean(false);
     private NamingService namingService;
 

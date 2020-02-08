@@ -17,8 +17,6 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Watcher;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -57,8 +55,6 @@ public class ZookeeperRegistry extends AbstractRegistry {
      */
     private String root;
 
-    private Map<URL, Object> registryCache = new ConcurrentHashMap<>(16);
-
     @Override
     protected void doShutdown() {
         if (zkClient != null) {
@@ -68,7 +64,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
     }
 
     @Override
-    protected void doStart(URL url) throws TimeoutException{
+    protected void doStart(URL url) throws TimeoutException {
         // 启动失败，进行重试
         Integer retryCount = getRetryCount();
 
@@ -100,7 +96,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
 
     }
 
-    private void init(int currentRetryCount, int retryCount) throws TimeoutException{
+    private void init(int currentRetryCount, int retryCount) throws TimeoutException {
         // todo zookeeperRegistry 这是暂时先设置为单机版
         String address = getRegistryUrl().getAddress();
         int timeout = Integer.parseInt(getRegistryUrl().getParameter("timeout", String.valueOf(0)));
@@ -108,7 +104,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
             zkClient = new ZkClient(address, timeout);
         } catch (Exception e) {
             // zk连接失败，sleep一段时间再重新进行连接
-            if(currentRetryCount > retryCount) {
+            if (currentRetryCount > retryCount) {
                 throw new TimeoutException(e.getMessage());
             }
             // SLEEP 一秒
@@ -257,9 +253,9 @@ public class ZookeeperRegistry extends AbstractRegistry {
         @Override
         public void handleNewSession() {
             if (log.isInfoEnabled()) {
-                log.info("zookeeper new session ========-------->, 重新注册, addressCache=", ZookeeperRegistry.this.registryCache);
+                log.info("zookeeper new session ========-------->, 重新注册, addressCache={}", ZookeeperRegistry.this.getRegistryUrlMap());
             } else {
-                System.out.println("new session------------==============================>, addressCache=" + ZookeeperRegistry.this.registryCache);
+                System.out.println("new session------------==============================>, addressCache=" + ZookeeperRegistry.this.getRegistryUrlMap());
             }
             // 重新注册
             ZookeeperRegistry.this.reRegister();
@@ -268,7 +264,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
         @Override
         public void handleSessionEstablishmentError(Throwable error) {
             // 回话建立错误
-            log.warn("zookkper回话建立错误， e=", error);
+            log.warn("zookeeper回话建立错误， e=", error);
             reConnected();
         }
 
