@@ -136,7 +136,7 @@ public class NettyClient extends AbstractRemotingClient {
 
         // 连接channel
         Channel channel = connect(this.bootstrap, config);
-        log.info("重连channel:" + channel.remoteAddress());
+        log.info("连接channel:" + channel.remoteAddress());
         this.channelHolder.setChannel(channel);
     }
 

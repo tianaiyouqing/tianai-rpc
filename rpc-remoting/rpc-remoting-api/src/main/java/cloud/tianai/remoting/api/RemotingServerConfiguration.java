@@ -15,6 +15,9 @@ public class RemotingServerConfiguration extends RemotingConfiguration {
     /** 监听线程数. */
     private Integer bossThreads = 1;
 
-    /** 心跳超时. */
-    private Integer idleTimeout = 6000 * 3;
+    private Integer serverIdleTimeout;
+
+    public Integer getServerIdleTimeout() {
+        return serverIdleTimeout == null ? getIdleTimeout() * 3 : serverIdleTimeout;
+    }
 }
