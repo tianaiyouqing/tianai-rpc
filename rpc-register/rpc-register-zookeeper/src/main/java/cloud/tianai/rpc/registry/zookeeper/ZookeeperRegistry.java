@@ -98,7 +98,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
 
     private void init(int currentRetryCount, int retryCount) throws TimeoutException {
         String address = getRegistryUrl().getAddress();
-        int timeout = Integer.parseInt(getRegistryUrl().getParameter("timeout", String.valueOf(0)));
+        int timeout = Integer.parseInt(getRegistryUrl().getParameter("timeout", String.valueOf(5000)));
         try {
             zkClient = new ZkClient(address, timeout);
         } catch (Exception e) {

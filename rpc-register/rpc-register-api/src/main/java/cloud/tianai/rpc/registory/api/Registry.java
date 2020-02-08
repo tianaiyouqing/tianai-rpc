@@ -26,6 +26,10 @@ public interface Registry {
      */
     Result<List<URL>> lookup(URL url);
 
+    /**
+     * 是否已启动
+     * @return
+     */
     boolean isStart();
 
     String getProtocol();

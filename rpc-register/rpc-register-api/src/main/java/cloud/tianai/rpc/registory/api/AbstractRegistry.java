@@ -77,6 +77,8 @@ public abstract class AbstractRegistry implements Registry {
             try {
                 doStart(url);
             } catch (TimeoutException e) {
+                // 启动失败, 执行shutdown
+                shutdown();
                 throw new RpcRegistryException(e.getMessage(), e);
             }
         } else {
