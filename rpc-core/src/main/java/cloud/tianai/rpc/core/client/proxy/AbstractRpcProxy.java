@@ -2,19 +2,22 @@ package cloud.tianai.rpc.core.client.proxy;
 
 import cloud.tianai.remoting.api.*;
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
-import cloud.tianai.rpc.common.*;
+import cloud.tianai.rpc.common.KeyValue;
+import cloud.tianai.rpc.common.Result;
+import cloud.tianai.rpc.common.RpcClientConfiguration;
+import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.constant.CommonConstant;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.CollectionUtils;
 import cloud.tianai.rpc.common.util.IPUtils;
 import cloud.tianai.rpc.core.factory.CodecFactory;
-import cloud.tianai.rpc.core.loader.RpcPropertiesLoader;
 import cloud.tianai.rpc.core.factory.LoadBalanceFactory;
 import cloud.tianai.rpc.core.factory.RemotingClientFactory;
 import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
 import cloud.tianai.rpc.core.loadbalance.LoadBalance;
 import cloud.tianai.rpc.core.loadbalance.impl.RoundRobinLoadBalance;
+import cloud.tianai.rpc.core.loader.RpcPropertiesLoader;
 import cloud.tianai.rpc.core.template.RpcClientTemplate;
 import cloud.tianai.rpc.core.util.RegistryUtils;
 import cloud.tianai.rpc.registory.api.NotifyListener;
@@ -115,7 +118,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
         // 加载一下配置
         RpcPropertiesLoader.loadIfNecessary();
         if (!lazyLoadRegistry) {
-            this.registry = startRegistryIfNecessary(conf.getRegistryUrl());
+            startRegistryIfNecessary(conf.getRegistryUrl());
             if (!lazyStartRpcClient) {
                 // 读取到注册到注册器中的url
                 List<URL> urls = lookUpOfThrow();
@@ -156,11 +159,14 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T>, NotifyListener
      * @return
      */
     protected Registry startRegistryIfNecessary(URL registryUrl) {
-        Registry registry = RegistryHolder.computeIfAbsent(registryUrl, RegistryUtils::createAndStart);
-        registry.subscribe(() -> {
-            // 重新拉取
-            lookAndSubscribeUrl(url);
-        });
+        if (registry == null) {
+            Registry r = RegistryHolder.computeIfAbsent(registryUrl, RegistryUtils::createAndStart);
+            r.subscribe(() -> {
+                // 重新拉取
+                lookAndSubscribeUrl(url);
+            });
+            this.registry = r;
+        }
         return registry;
     }
 
