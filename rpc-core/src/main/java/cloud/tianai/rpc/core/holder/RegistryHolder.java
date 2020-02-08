@@ -3,19 +3,18 @@ package cloud.tianai.rpc.core.holder;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.registory.api.Registry;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * @Author: 天爱有情
  * @Date: 2020/01/28 18:17
- * @Description: 注册工厂持有者
+ * @Description: 服务注册持有者
  */
 public class RegistryHolder {
-    private static Map<String, Registry> registryCache = new HashMap<>(2);
-    private static final Object LOCK = new Object();
+
+    private static Map<String, Registry> registryCache = new ConcurrentHashMap<>(2);
 
     static {
         // 注册关闭钩子
@@ -31,36 +30,9 @@ public class RegistryHolder {
         return registryCache.get(key);
     }
 
-    public static void putRegistry(URL url, Registry registry) {
-        String key = getKey(url);
-        Registry oldRegistry = registryCache.remove(key);
-        registryCache.put(key, registry);
-        if (oldRegistry != null) {
-            // 删除旧的registry
-            oldRegistry.shutdown();
-        }
-    }
-
-    public static void putRegistry(String key, Registry registry) {
-        Registry oldRegistry = registryCache.remove(key);
-        registryCache.put(key, registry);
-        if (oldRegistry != null) {
-            // 删除旧的registry
-            oldRegistry.shutdown();
-        }
-    }
-
     public static Registry computeIfAbsent(URL url, Function<URL, Registry> supplier) {
         String key = getKey(url);
-        Registry registry = getRegistry(key);
-        if (registry == null) {
-            synchronized (LOCK) {
-                if ((registry = getRegistry(key)) == null) {
-                    registry = supplier.apply(url);
-                    putRegistry(key, registry);
-                }
-            }
-        }
+        Registry registry = registryCache.computeIfAbsent(key, (k) -> supplier.apply(url));
         return registry;
     }
 

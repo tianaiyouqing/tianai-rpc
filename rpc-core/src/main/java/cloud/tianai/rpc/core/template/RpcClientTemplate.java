@@ -3,7 +3,6 @@ package cloud.tianai.rpc.core.template;
 import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.remoting.api.exception.RpcChannelClosedException;
-import cloud.tianai.rpc.core.util.RpcClientUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CompletableFuture;
@@ -67,7 +66,7 @@ public class RpcClientTemplate {
             synchronized (lockFlag) {
                 if (!rpcClient.isActive()) {
                     // 重新连接
-                    RpcClientUtils.reconnect(rpcClient, 0, retryCount);
+                    rpcClient.reconnect(retryCount);
                 }
             }
         }

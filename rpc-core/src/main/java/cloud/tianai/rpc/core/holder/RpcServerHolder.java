@@ -3,10 +3,8 @@ package cloud.tianai.rpc.core.holder;
 import cloud.tianai.remoting.api.RemotingServer;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 /**
  * @Author: 天爱有情
@@ -14,27 +12,17 @@ import java.util.function.Supplier;
  * @Description: RPCServer持有者
  */
 public class RpcServerHolder {
+
     private static final String SPLIT = ":";
 
     /**
      * (protocol:address) -> RpcClient.
      */
     private static Map<String, RemotingServer> rpcServerMap = new ConcurrentHashMap<>(32);
-    private static Map<String, Lock> lockMap = new ConcurrentHashMap<>(32);
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(RpcServerHolder :: shutdown));
+        Runtime.getRuntime().addShutdownHook(new Thread(RpcServerHolder::shutdown));
     }
-
-    public static Lock getLock(String protocol, String address) {
-        Lock lock = lockMap.computeIfAbsent(getKey(protocol, address), (k) -> {
-            String[] split = k.split(SPLIT);
-            Lock l = new Lock(split[0], split[1]);
-            return l;
-        });
-        return lock;
-    }
-
 
     /**
      * 获取RpcClient如果存在
@@ -52,16 +40,8 @@ public class RpcServerHolder {
     }
 
     public static RemotingServer computeIfAbsent(String protocol, String address, BiFunction<String, String, RemotingServer> supplier) {
-        RemotingServer rpcServer = getRpcServer(protocol, address);
-        if (rpcServer == null) {
-            Lock lock = getLock(protocol, address);
-            synchronized (lock) {
-                if ((rpcServer = getRpcServer(protocol, address)) == null) {
-                    rpcServer = supplier.apply(protocol, address);
-                    putRpcServer(protocol, address, rpcServer);
-                }
-            }
-        }
+        String key = getKey(protocol, address);
+        RemotingServer rpcServer = rpcServerMap.computeIfAbsent(key, (k) -> supplier.apply(protocol, address));
         return rpcServer;
     }
 
@@ -109,42 +89,4 @@ public class RpcServerHolder {
             removeRpcServer(key);
         }
     }
-
-
-    public static class Lock {
-        private String protocol;
-        private String address;
-
-        public Lock(String protocol, String address) {
-            this.protocol = protocol;
-            this.address = address;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            Lock lock = (Lock) o;
-            return Objects.equals(protocol, lock.protocol) &&
-                    Objects.equals(address, lock.address);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(protocol, address);
-        }
-
-        @Override
-        public String toString() {
-            return "Lock{" +
-                    "protocol='" + protocol + '\'' +
-                    ", address='" + address + '\'' +
-                    '}';
-        }
-    }
-
 }

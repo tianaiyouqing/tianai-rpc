@@ -40,7 +40,7 @@ import static com.alibaba.nacos.client.naming.utils.UtilAndComs.NACOS_NAMING_LOG
 public class NacosRegistry extends AbstractRegistry {
 
     public static final String PROTOCOL = "nacos";
-    public static final int DEFAULT_RETRY_COUNT = 30;
+//    public static final int DEFAULT_RETRY_COUNT = 30;
     private static final Object LOCK = new Object();
 
     public static final String NACOS_UP_STATUS = "UP";
@@ -52,7 +52,7 @@ public class NacosRegistry extends AbstractRegistry {
 
     private Map<NotifyListener, EventListenerAdapter> listenerAdapterMap = new ConcurrentHashMap<>(16);
 
-    private Integer retryCount = DEFAULT_RETRY_COUNT;
+//    private Integer retryCount = DEFAULT_RETRY_COUNT;
     private AtomicBoolean statusThread = new AtomicBoolean(false);
     private NamingService namingService;
 
@@ -115,7 +115,7 @@ public class NacosRegistry extends AbstractRegistry {
                     if (NACOS_DOWN_STATUS.equals(na.getServerStatus())) {
                         // 如果状态为STOP状态
                         try {
-                            connect(getRegistryUrl(), 0, retryCount);
+                            connect(getRegistryUrl(), 0, getRetryCount());
                         } catch (ConnectException e) {
                             shutdown();
                             throw new RpcException("TIANAI-RPC REGISTRY NACOS 重连失败. address:".concat(getRegistryUrl().getAddress()));
@@ -233,7 +233,7 @@ public class NacosRegistry extends AbstractRegistry {
     @Override
     protected void doStart(URL url) {
         try {
-            namingService = connect(url, 0, retryCount);
+            namingService = connect(url, 0, getRetryCount());
             // 创建调度线程
             scheduledExecutorService = createScheduledExecutorService(1);
             // 开启状态监听线程

@@ -3,6 +3,7 @@ package cloud.tianai.rpc.registry.zookeeper;
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.util.CollectionUtils;
+import cloud.tianai.rpc.common.util.ThreadUtils;
 import cloud.tianai.rpc.registory.api.AbstractRegistry;
 import cloud.tianai.rpc.registory.api.NotifyListener;
 import cloud.tianai.rpc.registory.api.StatusListener;
@@ -18,6 +19,8 @@ import org.apache.zookeeper.Watcher;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @Author: 天爱有情
@@ -53,6 +56,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
      * 根目录.
      */
     private String root;
+
     private Map<URL, Object> registryCache = new ConcurrentHashMap<>(16);
 
     @Override
@@ -64,10 +68,13 @@ public class ZookeeperRegistry extends AbstractRegistry {
     }
 
     @Override
-    protected void doStart(URL url) {
+    protected void doStart(URL url) throws TimeoutException{
+        // 启动失败，进行重试
+        Integer retryCount = getRetryCount();
+
         try {
-            init();
-        } catch (Exception e) {
+            init(0, Math.max(retryCount, 1));
+        } catch (TimeoutException e) {
             // 启动设置为false
             throw e;
         }
@@ -93,11 +100,22 @@ public class ZookeeperRegistry extends AbstractRegistry {
 
     }
 
-    private void init() {
+    private void init(int currentRetryCount, int retryCount) throws TimeoutException{
         // todo zookeeperRegistry 这是暂时先设置为单机版
         String address = getRegistryUrl().getAddress();
-        int timeout = Integer.parseInt(getRegistryUrl().getParameter("timeout", String.valueOf(5000)));
-        zkClient = new ZkClient(address, timeout);
+        int timeout = Integer.parseInt(getRegistryUrl().getParameter("timeout", String.valueOf(0)));
+        try {
+            zkClient = new ZkClient(address, timeout);
+        } catch (Exception e) {
+            // zk连接失败，sleep一段时间再重新进行连接
+            if(currentRetryCount > retryCount) {
+                throw new TimeoutException(e.getMessage());
+            }
+            // SLEEP 一秒
+            ThreadUtils.sleep(1000, TimeUnit.MILLISECONDS);
+            // 重新初始化
+            init(++currentRetryCount, retryCount);
+        }
         zkClient.subscribeStateChanges(new WatcherListener(getStatusListenerSet()));
         this.root = getRegistryUrl().getParameter(GROUP_KEY, DEFAULT_ROOT);
         // 判断根节点是否存在，如果不存在则创建， 创建类型必须是持久类型的
@@ -264,7 +282,8 @@ public class ZookeeperRegistry extends AbstractRegistry {
                 } catch (InterruptedException e) {
                     log.error(e.getMessage(), e);
                 }
-                ZookeeperRegistry.this.init();
+                Integer retryCount = getRetryCount();
+                ZookeeperRegistry.this.init(0, Math.max(retryCount, 1));
             } catch (Exception e) {
                 // 报错后重新连接
                 e.printStackTrace();

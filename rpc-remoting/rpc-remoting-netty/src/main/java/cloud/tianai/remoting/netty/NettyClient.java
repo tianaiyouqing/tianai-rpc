@@ -4,6 +4,7 @@ import cloud.tianai.remoting.api.AbstractRemotingClient;
 import cloud.tianai.remoting.api.RemotingChannelHolder;
 import cloud.tianai.remoting.api.RemotingConfiguration;
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
+import cloud.tianai.rpc.common.util.ThreadUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.concurrent.TimeoutException;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -136,12 +138,32 @@ public class NettyClient extends AbstractRemotingClient {
         Channel channel = connect(this.bootstrap, config);
         log.info("重连channel:" + channel.remoteAddress());
         this.channelHolder.setChannel(channel);
+    }
 
+    @Override
+    public void reconnect(int retryCount) throws TimeoutException {
+        reconnect(0, Math.max(retryCount, 1));
+    }
+
+
+    protected void reconnect(int currRetryCount, int retryCount) throws TimeoutException {
+        try {
+            doConnect();
+        } catch (RpcRemotingException ex) {
+            // 这里应该进行重试
+            if (currRetryCount < retryCount) {
+                // 休眠100毫秒
+                ThreadUtils.sleep(100, MILLISECONDS);
+                reconnect(++currRetryCount, retryCount);
+            } else {
+                throw new TimeoutException(ex.getMessage());
+            }
+        }
     }
 
     @Override
     public SocketAddress getRemoteAddress() {
-        if(channel != null) {
+        if (channel != null) {
             return channel.remoteAddress();
         }
         return null;

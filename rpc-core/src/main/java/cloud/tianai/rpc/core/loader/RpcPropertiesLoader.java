@@ -46,7 +46,7 @@ public class RpcPropertiesLoader {
             resources = ClassUtils.getClassLoader().getResources(PROPERTIES_PATH);
         } catch (IOException e) {
             // 不做处理
-            log.error("加载{}}异常e={}", PROPERTIES_PATH, e);
+            log.error("加载{}异常e={}", PROPERTIES_PATH, e);
             return;
         }
         // 读取URL
