@@ -38,7 +38,7 @@ public class RpcClientTemplate {
     public Object request(RemotingClient rpcClient, Request request) throws TimeoutException {
         // 通过负载均衡读取到对应的rpcClient
         // 如果请求超时，理应再从负载均衡器里拿一个连接执行重试
-        CompletableFuture<Object> future = rpcClient.getchannel().request(request, requestTimeout);
+        CompletableFuture<Object> future = rpcClient.getChannel().request(request, requestTimeout);
         Object resObj = null;
         try {
             resObj = future.get(requestTimeout, TimeUnit.MILLISECONDS);

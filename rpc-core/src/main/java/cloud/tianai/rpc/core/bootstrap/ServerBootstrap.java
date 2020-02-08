@@ -117,7 +117,7 @@ public class ServerBootstrap {
         if (remotingServer == null) {
             return null;
         }
-        return remotingServer.getchannel();
+        return remotingServer.getChannel();
     }
 
     public ServerBootstrap register(Class<?> interfaceClazz, Object ref) {

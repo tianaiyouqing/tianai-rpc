@@ -31,7 +31,7 @@ public interface RemotingEndpoint {
      * 获取管道
      * @return
      */
-    RemotingChannelHolder getchannel();
+    RemotingChannelHolder getChannel();
 
     /**
      * 停止

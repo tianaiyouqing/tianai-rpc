@@ -117,7 +117,7 @@ public class NettyClient extends AbstractRemotingClient {
     }
 
     @Override
-    public RemotingChannelHolder getchannel() {
+    public RemotingChannelHolder getChannel() {
         return channelHolder;
     }
 

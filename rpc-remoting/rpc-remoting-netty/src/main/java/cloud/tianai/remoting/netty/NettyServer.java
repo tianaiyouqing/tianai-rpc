@@ -86,7 +86,7 @@ public class NettyServer extends AbstractRemotingServer {
                     0,
                     TimeUnit.MILLISECONDS,
                     new LinkedBlockingQueue<Runnable>(1024),
-                    new NamedThreadFactory("tianai-rpc", true),
+                    new NamedThreadFactory("tianai-rpc-svc", false),
                     new ThreadPoolExecutor.AbortPolicy());
         }
     }
@@ -162,7 +162,7 @@ public class NettyServer extends AbstractRemotingServer {
     }
 
     @Override
-    public RemotingChannelHolder getchannel() {
+    public RemotingChannelHolder getChannel() {
         return channelHolder;
     }
 
