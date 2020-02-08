@@ -58,7 +58,7 @@ public class CodecFactory {
                 Class<? extends RemotingDataEncoder> encoder = codecClass.getKey();
                 Class<? extends RemotingDataDecoder> decoder = codecClass.getValue();
                 try {
-                    res = getCodec(protocol, encoder, decoder);
+                    res = createCodec(protocol, encoder, decoder);
                     codecClassMap.remove(protocol);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -69,20 +69,16 @@ public class CodecFactory {
         return result;
     }
 
-    private static KeyValue<RemotingDataEncoder, RemotingDataDecoder> getCodec(String protocol,
-                                                                               Class<? extends RemotingDataEncoder> encoderClass,
-                                                                               Class<? extends RemotingDataDecoder> decoderClass) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    private static KeyValue<RemotingDataEncoder, RemotingDataDecoder> createCodec(String protocol,
+                                                                                  Class<? extends RemotingDataEncoder> encoderClass,
+                                                                                  Class<? extends RemotingDataDecoder> decoderClass) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         KeyValue<RemotingDataEncoder, RemotingDataDecoder> res;
         if (!Objects.isNull(res = codecCache.get(protocol))) {
             return res;
         }
         RemotingDataEncoder encoder = ClassUtils.createObject(encoderClass);
         RemotingDataDecoder decoder = ClassUtils.createObject(decoderClass);
-
         res = new KeyValue<>(encoder, decoder);
-
-        codecCache.remove(protocol);
-        codecCache.put(protocol, res);
         return res;
     }
 
