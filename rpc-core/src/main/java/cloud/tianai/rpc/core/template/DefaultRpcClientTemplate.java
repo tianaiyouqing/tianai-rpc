@@ -27,13 +27,13 @@ public class DefaultRpcClientTemplate extends AbstractLoadBalanceRpcClientTempla
         this.url = url;
         // 加载一个Rpc的配置
         RpcPropertiesLoader.loadIfNecessary();
-        if(lazyLoadLoadBalance) {
+        if(!lazyLoadLoadBalance) {
             initLoadBalance();
         }
-        if(lazyLoadRegistry) {
+        if(!lazyLoadRegistry) {
             initRegistryIfNecessary();
         }
-        if(lazyLoadRemotingRpcClient) {
+        if(!lazyLoadRemotingRpcClient) {
             getRemotingClients();
         }
 
