@@ -14,4 +14,6 @@ public class RpcClientConfiguration extends RpcConfiguration{
     private String loadBalance;
 
     private Integer requestTimeout = 3000;
+
+    private Integer retry = 3;
 }

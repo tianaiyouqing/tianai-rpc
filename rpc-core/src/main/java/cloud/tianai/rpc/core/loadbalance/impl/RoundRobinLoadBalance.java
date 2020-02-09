@@ -31,7 +31,7 @@ public class RoundRobinLoadBalance implements LoadBalance {
     }
 
     @Override
-    public RemotingClient select(List<RemotingClient> rpcClients, URL url, Request request) {
+    public RemotingClient select(List<RemotingClient> rpcClients, Request request) {
         if (rpcClients.size() == 1) {
             // 如果只有一个，直接返回
             return rpcClients.get(0);

@@ -1,6 +1,5 @@
 package cloud.tianai.rpc.core.client.proxy.impl;
 
-import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.remoting.api.Response;
 import cloud.tianai.rpc.common.exception.RpcException;
@@ -11,7 +10,6 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Objects;
 
 /**
  * @Author: 天爱有情
@@ -43,12 +41,8 @@ public class JdkRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHan
             return proxy.equals(args[0]);
         }
         Request request = warpRequest(proxy, method, args);
-        // 懒加载 registry
-        startRegistryIfNecessary(super.rpcConfiguration.getRegistryUrl());
-        // 负载均衡器拿到rpcClient
-        RemotingClient rpcClient = loadBalance(request);
         // 执行请求
-        Object resObj = retryRequest(rpcClient, request);
+        Object resObj = rpcClientTemplate.request(request, requestTimeout, retry);
         Response response;
         if (resObj instanceof Response) {
             response = (Response) resObj;
@@ -64,5 +58,4 @@ public class JdkRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHan
         // 直接抛异常
         throw new RpcException("rpc请求错误 ， status=" + response.getStatus() + "msg=" + response.getErrorMessage());
     }
-
 }

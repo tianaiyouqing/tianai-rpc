@@ -21,7 +21,7 @@ public class RpcClientTest {
         prop.setRequestTimeout(3000);
         prop.setProtocol("netty");
 
-        URL nacosConf = new URL("nacos", "127.0.0.1", 8848);
+        URL nacosConf = new URL("zookeeper", "127.0.0.1", 2181123);
         nacosConf = nacosConf.addParameter("namespace", "1ca3c65a-92a7-4a09-8de1-4bfe1c89d240");
         // 注册器
         prop.setRegistryUrl(nacosConf);

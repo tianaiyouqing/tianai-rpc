@@ -22,9 +22,8 @@ public interface LoadBalance {
     /**
      * 负载具体实现
      * @param rpcClients
-     * @param url
      * @param request
      * @return
      */
-    RemotingClient select(List<RemotingClient> rpcClients, URL url, Request request);
+    RemotingClient select(List<RemotingClient> rpcClients, Request request);
 }
