@@ -2,6 +2,7 @@ package cloud.tianai.rpc.core.template;
 
 import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
+import cloud.tianai.remoting.api.Response;
 import cloud.tianai.remoting.api.exception.RpcChannelClosedException;
 import cloud.tianai.rpc.common.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
@@ -25,13 +26,22 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
     private final Object lock = new Object();
 
     @Override
-    public Object request(Request request, Integer timeout, Integer retry) throws TimeoutException {
+    public Response request(Request request, Integer timeout, Integer retry) throws TimeoutException {
         return request(request, timeout, retry, retry);
     }
 
     @Override
-    public Object request(Request request, Integer timeout, Integer connectRetry, Integer requestRetry) throws TimeoutException {
-        return retryRequest(request, 0, connectRetry, requestRetry);
+    public Response request(Request request, Integer timeout, Integer connectRetry, Integer requestRetry) throws TimeoutException {
+        Object resObj = retryRequest(request, 0, connectRetry, requestRetry);
+        Response response;
+        if (resObj instanceof Response) {
+            response = (Response) resObj;
+        } else {
+            response = new Response(request.getId());
+            response.setResult(resObj);
+            response.setStatus(Response.OK);
+        }
+        return response;
     }
 
     /**

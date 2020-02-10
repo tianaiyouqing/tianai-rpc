@@ -19,6 +19,10 @@ import java.lang.reflect.Proxy;
 @Slf4j
 public class JdkRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHandler {
 
+    public static final String TO_STRING_FUN_NAME = "toString";
+    public static final String HASH_CODE_FUN_NAME = "hashCode";
+    public static final String EQUALS_FUN_NAME = "equals";
+
     @Override
     public T doCreateProxy() {
         @SuppressWarnings("unchecked")
@@ -32,25 +36,17 @@ public class JdkRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHan
         String methodName = method.getName();
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length == 0) {
-            if ("toString".equals(methodName)) {
+            if (TO_STRING_FUN_NAME.equals(methodName)) {
                 return super.toString();
-            } else if ("hashCode".equals(methodName)) {
+            } else if (HASH_CODE_FUN_NAME.equals(methodName)) {
                 return super.hashCode();
             }
-        } else if (parameterTypes.length == 1 && "equals".equals(methodName)) {
+        } else if (parameterTypes.length == 1 && EQUALS_FUN_NAME.equals(methodName)) {
             return proxy.equals(args[0]);
         }
         Request request = warpRequest(proxy, method, args);
         // 执行请求
-        Object resObj = rpcClientTemplate.request(request, requestTimeout, retry);
-        Response response;
-        if (resObj instanceof Response) {
-            response = (Response) resObj;
-        } else {
-            response = new Response(request.getId());
-            response.setResult(resObj);
-            response.setStatus(Response.OK);
-        }
+        Response response = rpcClientTemplate.request(request, requestTimeout, retry);
         if (Response.OK == response.getStatus()) {
             // 如果是ok，直接返回
             return response.getResult();

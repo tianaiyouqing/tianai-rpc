@@ -2,6 +2,7 @@ package cloud.tianai.rpc.core.template;
 
 import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
+import cloud.tianai.remoting.api.Response;
 import cloud.tianai.rpc.common.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.core.loadbalance.LoadBalance;
@@ -19,40 +20,68 @@ public interface RpcClientTemplate {
 
     /**
      * RPC请求
+     *
      * @param request 请求数据
      * @param timeout 请求超时
-     * @param retry 重试次数
+     * @param retry   重试次数
      * @return 返回数据
      */
-    Object request(Request request, Integer timeout, Integer retry) throws TimeoutException ;
+    Response request(Request request, Integer timeout, Integer retry) throws TimeoutException;
 
 
-    Object request(Request request, Integer timeout, Integer connectRetry, Integer requestRetry) throws TimeoutException;
+    /**
+     * RPC请求
+     *
+     * @param request      请求体
+     * @param timeout      超时
+     * @param connectRetry 连接重试
+     * @param requestRetry 请求重试
+     * @return Response
+     * @throws TimeoutException
+     */
+    Response request(Request request, Integer timeout, Integer connectRetry, Integer requestRetry) throws TimeoutException;
 
 
     /**
      * 获取服务注册
+     *
      * @return
      */
     Registry getRegistry();
 
     /**
      * 获取当前执行的LoadBalance
+     *
      * @return
      */
     LoadBalance getLoadBalance();
 
     /**
      * 获取RpcClient相关配置
+     *
      * @return
      */
     RpcClientConfiguration getConfig();
 
 
+    /**
+     * 获取LOCK
+     *
+     * @return
+     */
     Object getClientLock();
 
-
+    /**
+     * 获取URL
+     *
+     * @return
+     */
     URL getUrl();
 
+    /**
+     * 获取远程客户端
+     *
+     * @return
+     */
     List<RemotingClient> getRemotingClients();
 }

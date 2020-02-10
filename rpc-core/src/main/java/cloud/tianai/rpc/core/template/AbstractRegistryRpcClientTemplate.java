@@ -1,7 +1,6 @@
 package cloud.tianai.rpc.core.template;
 
 import cloud.tianai.remoting.api.RemotingClient;
-import cloud.tianai.remoting.api.Request;
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
@@ -23,7 +22,15 @@ import java.util.List;
  */
 @Slf4j
 public abstract class AbstractRegistryRpcClientTemplate extends AbstractRpcClientTemplate implements NotifyListener {
+
+    /**
+     * 服务注册.
+     */
     private Registry registry;
+
+    /**
+     * 订阅的URLS.
+     */
     protected volatile List<URL> subscribeUrls = Collections.emptyList();
 
     @Override
@@ -39,7 +46,7 @@ public abstract class AbstractRegistryRpcClientTemplate extends AbstractRpcClien
 
     @Override
     public Registry getRegistry() {
-        if(registry == null) {
+        if (registry == null) {
             initRegistryIfNecessary();
         }
         return registry;
@@ -47,7 +54,7 @@ public abstract class AbstractRegistryRpcClientTemplate extends AbstractRpcClien
 
     protected void initRegistryIfNecessary() {
         URL registryUrl = getConfig().getRegistryUrl();
-        Registry r = RegistryHolder.computeIfAbsent(registryUrl, (u) -> {
+        this.registry = RegistryHolder.computeIfAbsent(registryUrl, (u) -> {
             Registry r1 = RegistryUtils.createAndStart(u);
             r1.subscribe(() -> {
                 // 重新拉取
@@ -55,7 +62,6 @@ public abstract class AbstractRegistryRpcClientTemplate extends AbstractRpcClien
             });
             return r1;
         });
-        this.registry = r;
     }
 
     private List<URL> lookUpOfThrow() {
