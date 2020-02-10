@@ -58,7 +58,9 @@ public abstract class AbstractRegistryRpcClientTemplate extends AbstractRpcClien
             Registry r1 = RegistryUtils.createAndStart(u);
             r1.subscribe(() -> {
                 // 重新拉取
-                lookAndSubscribeUrl(getUrl());
+                synchronized (getClientLock()) {
+                    lookAndSubscribeUrl(getUrl());
+                }
             });
             return r1;
         });
@@ -66,7 +68,11 @@ public abstract class AbstractRegistryRpcClientTemplate extends AbstractRpcClien
 
     private List<URL> lookUpOfThrow() {
         if (CollectionUtils.isEmpty(subscribeUrls)) {
-            lookAndSubscribeUrl(getUrl());
+            synchronized (getClientLock()) {
+                if (CollectionUtils.isEmpty(subscribeUrls)) {
+                    lookAndSubscribeUrl(getUrl());
+                }
+            }
         }
         if (CollectionUtils.isEmpty(subscribeUrls)) {
             throw new RpcException("注册器中无法读取到该URL [" + getUrl() + "] 对应的注册地址");

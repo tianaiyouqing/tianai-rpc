@@ -2,8 +2,7 @@ package cloud.tianai.rpc.core.loadbalance.impl;
 
 import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
-import cloud.tianai.rpc.common.URL;
-import cloud.tianai.rpc.core.loadbalance.LoadBalance;
+import cloud.tianai.rpc.core.loadbalance.AbstractLoadBalance;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @Date: 2020/01/28 11:34
  * @Description: 轮询模式的负载均衡器
  */
-public class RoundRobinLoadBalance implements LoadBalance {
+public class RoundRobinLoadBalance extends AbstractLoadBalance {
 
     public static final String NAME = "roundrobin";
 
@@ -31,11 +30,7 @@ public class RoundRobinLoadBalance implements LoadBalance {
     }
 
     @Override
-    public RemotingClient select(List<RemotingClient> rpcClients, Request request) {
-        if (rpcClients.size() == 1) {
-            // 如果只有一个，直接返回
-            return rpcClients.get(0);
-        }
+    protected RemotingClient doSelect(List<RemotingClient> rpcClients, Request request) {
         String key = request.getInterfaceType().getName() + "." + request.getMethodName();
         ConcurrentMap<String, WeightedRoundRobin> map = methodWeightMap.get(key);
         if (map == null) {
@@ -54,7 +49,7 @@ public class RoundRobinLoadBalance implements LoadBalance {
             WeightedRoundRobin weightedRoundRobin = map.get(id);
             if (weightedRoundRobin == null) {
                 weightedRoundRobin = new WeightedRoundRobin();
-                weightedRoundRobin.setWeight(100);
+                weightedRoundRobin.setWeight(getWeight(rpcClient));
                 map.putIfAbsent(id, weightedRoundRobin);
             }
             long cur = weightedRoundRobin.increaseCurrent();

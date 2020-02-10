@@ -1,6 +1,7 @@
 package cloud.tianai.rpc.core.factory;
 
 import cloud.tianai.rpc.core.loadbalance.LoadBalance;
+import cloud.tianai.rpc.core.loadbalance.impl.RandomLoadBalance;
 import cloud.tianai.rpc.core.loadbalance.impl.RoundRobinLoadBalance;
 
 import java.util.Map;
@@ -27,6 +28,8 @@ public class LoadBalanceFactory {
     static {
         // 添加轮询策略
         addLoadBalance(new RoundRobinLoadBalance());
+        // 添加随机策略
+        addLoadBalance(new RandomLoadBalance());
     }
 
 }

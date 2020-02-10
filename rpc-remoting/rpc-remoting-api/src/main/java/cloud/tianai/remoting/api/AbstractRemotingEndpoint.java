@@ -15,6 +15,11 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
 
     private String id;
 
+    /**
+     * 默认重量都是100
+     */
+    private int weight = 100;
+
     @Override
     public String getId() {
         return id;
@@ -53,6 +58,16 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
     @Override
     public boolean isStart() {
         return start.get();
+    }
+
+    @Override
+    public void setWeight(int weight) {
+        this.weight = weight;
+    }
+
+    @Override
+    public int getWeight() {
+        return weight;
     }
 
     protected abstract RemotingChannelHolder doStart(RemotingConfiguration config) throws RpcRemotingException;

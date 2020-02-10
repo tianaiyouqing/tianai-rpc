@@ -13,19 +13,27 @@ import java.io.IOException;
  * @Description: 基于hessian的编码器
  */
 public class Hessian2Encoder implements RemotingDataEncoder {
+
     @Override
     public byte[] encode(Object msg) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
             Hessian2Output ho = new Hessian2Output(os);
+            ho.setSerializerFactory(Hessian2SerializerFactory.SERIALIZER_FACTORY);
             ho.writeObject(msg);
-            ho.getBytesOutputStream().flush();
-            ho.completeMessage();
+            ho.flushBuffer();
+            ho.flush();
             ho.close();
             byte[] result = os.toByteArray();
             return result;
         } catch (IOException e) {
             throw new CodecException(e);
+        }finally {
+            try {
+                os.close();
+            } catch (IOException e) {
+
+            }
         }
     }
 }

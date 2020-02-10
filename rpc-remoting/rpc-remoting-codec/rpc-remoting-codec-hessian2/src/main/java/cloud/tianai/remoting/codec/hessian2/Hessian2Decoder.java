@@ -14,13 +14,20 @@ import java.io.IOException;
 public class Hessian2Decoder implements RemotingDataDecoder {
     @Override
     public <T> T decode(byte[] data, Class<T> clazz) {
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
         try {
-            ByteArrayInputStream in = new ByteArrayInputStream(data);
             Hessian2Input hessian2Input = new Hessian2Input(in);
+            hessian2Input.setSerializerFactory(Hessian2SerializerFactory.SERIALIZER_FACTORY);
             Object obj = hessian2Input.readObject(clazz);
             return (T) obj;
         } catch (IOException e) {
             throw new CodecException(e);
+        }finally {
+            try {
+                in.close();
+            } catch (IOException e) {
+
+            }
         }
     }
 }

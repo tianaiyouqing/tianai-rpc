@@ -49,4 +49,15 @@ public interface RemotingEndpoint {
      * @return
      */
     String getRemotingType();
+
+    /**
+     * 设置 weight
+     */
+    void setWeight(int weight);
+
+    /**
+     * 获取Weight
+     * @return
+     */
+    int getWeight();
 }
