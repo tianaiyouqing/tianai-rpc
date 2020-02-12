@@ -7,5 +7,6 @@ package cloud.tianai.rpc.remoting.codec.api;
  */
 public interface RemotingDataEncoder {
 
+
     byte[] encode(Object msg);
 }
