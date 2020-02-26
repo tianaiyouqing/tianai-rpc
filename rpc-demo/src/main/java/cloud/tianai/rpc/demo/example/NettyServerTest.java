@@ -35,7 +35,7 @@ public class NettyServerTest {
     }
 
 
-    private static class DemoRemotingDataProcessor implements RemotingDataProcessor {
+    private static class DemoRemotingDataProcessor  implements RemotingDataProcessor {
 
         @Override
         public void readMessage(cloud.tianai.remoting.api.Channel channel, Object msg, Object extend) {
@@ -50,7 +50,6 @@ public class NettyServerTest {
         public Object writeMessage(cloud.tianai.remoting.api.Channel channel, Object msg, Object extend) {
             return null;
         }
-
         @Override
         public void sendHeartbeat(Channel channel, Object extend) {
 

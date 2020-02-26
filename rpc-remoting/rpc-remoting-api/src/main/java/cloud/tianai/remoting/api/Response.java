@@ -1,6 +1,8 @@
 package cloud.tianai.remoting.api;
 
 import lombok.Data;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 
@@ -10,7 +12,9 @@ import java.io.Serializable;
  * @Description: Response
  */
 @Data
-public class Response implements Serializable {
+@Accessors(chain = true)
+@ToString(callSuper = true)
+public class Response extends Header implements Serializable {
     /**
      * ok.
      */

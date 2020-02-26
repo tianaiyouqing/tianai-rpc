@@ -1,6 +1,6 @@
 package cloud.tianai.rpc.core.client.proxy;
 
-import cloud.tianai.rpc.common.RpcClientConfiguration;
+import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 
 /**
  * @Author: 天爱有情

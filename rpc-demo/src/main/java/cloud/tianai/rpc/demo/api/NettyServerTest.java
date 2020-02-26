@@ -1,6 +1,7 @@
 package cloud.tianai.rpc.demo.api;
 
 import cloud.tianai.remoting.api.*;
+import cloud.tianai.remoting.api.util.ResponseUtils;
 import cloud.tianai.remoting.codec.hessian2.Hessian2Decoder;
 import cloud.tianai.remoting.codec.hessian2.Hessian2Encoder;
 
@@ -36,7 +37,7 @@ public class NettyServerTest {
     public static class TestRpcInvocation implements RpcInvocation {
 
         @Override
-        public Object invoke(Request request) {
+        public Response invoke(Request request) {
             System.out.println("接口类型: " + request.getInterfaceType());
             try {
                 Class<?> clazz = Class.forName("cloud.tianai.rpc.demo.api.DemoServiceImpl");
@@ -49,7 +50,7 @@ public class NettyServerTest {
 
                 Object obj = clazz.newInstance();
                 Object result = method.invoke(obj, requestParam);
-                return result;
+                return ResponseUtils.warpResponse(result, request);
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (NoSuchMethodException e) {

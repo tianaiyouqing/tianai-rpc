@@ -1,12 +1,12 @@
 package cloud.tianai.rpc.core.client.proxy;
 
 import cloud.tianai.remoting.api.Request;
-import cloud.tianai.remoting.api.RpcInvocation;
-import cloud.tianai.rpc.common.RpcClientConfiguration;
+import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.util.IPUtils;
 import cloud.tianai.rpc.core.template.DefaultRpcClientTemplate;
 import cloud.tianai.rpc.core.template.RpcClientTemplate;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
@@ -43,6 +43,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T> {
      */
     protected int retry;
 
+    @Getter
     protected RpcClientTemplate rpcClientTemplate;
 
     /**
@@ -62,9 +63,13 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T> {
         this.retry = conf.getOrDefault(conf.getRetry(), DEFAULT_REQUEST_RETRY);
         this.url = new URL("tianai-rpc", IPUtils.getHostIp(), 0, interfaceClass.getName());
         // 构建RpcClient模板
-        rpcClientTemplate = new DefaultRpcClientTemplate(rpcConfiguration, url, lazyLoadRegistry, lazyStartRpcClient, true);
+        rpcClientTemplate = createRpcClientTemplate(conf, lazyLoadRegistry, lazyStartRpcClient);
         return doCreateProxy();
 
+    }
+
+    private RpcClientTemplate createRpcClientTemplate(RpcClientConfiguration conf, boolean lazyLoadRegistry, boolean lazyStartRpcClient) {
+        return new DefaultRpcClientTemplate(rpcConfiguration, url, lazyLoadRegistry, lazyStartRpcClient, true);
     }
 
     /**
@@ -83,16 +88,6 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T> {
                 .setReturnType(method.getReturnType())
                 .setHeartbeat(false);
         return request;
-    }
-
-    public static class HeartbeatRpcInvocation implements RpcInvocation {
-        @Override
-        public Object invoke(Request request) {
-            if (request.isHeartbeat()) {
-                return "heartbeat success";
-            }
-            return null;
-        }
     }
 
     @Override

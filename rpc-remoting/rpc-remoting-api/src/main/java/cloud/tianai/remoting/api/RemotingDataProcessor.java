@@ -1,5 +1,7 @@
 package cloud.tianai.remoting.api;
 
+import java.util.Set;
+
 /**
  * @Author: 天爱有情
  * @Date: 2020/01/05 12:03
@@ -15,6 +17,7 @@ public interface RemotingDataProcessor {
      */
     void readMessage(Channel channel, Object msg, Object extend);
 
+
     /**
      * 写数据，回调函数， 用于扩展
      * @param channel 管道
@@ -22,7 +25,9 @@ public interface RemotingDataProcessor {
      * @param extend 扩展字段
      * @return 如果不为空，则通过底层管道直接把数据写出去，如果为空，则不写数据
      */
-    Object writeMessage(Channel channel, Object msg, Object extend);
+    default Object writeMessage(Channel channel, Object msg, Object extend) {
+        return msg;
+    }
 
     /**
      * 发送心跳请求

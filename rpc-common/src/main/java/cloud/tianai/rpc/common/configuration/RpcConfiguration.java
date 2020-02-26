@@ -1,5 +1,6 @@
-package cloud.tianai.rpc.common;
+package cloud.tianai.rpc.common.configuration;
 
+import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.constant.CommonConstant;
 import lombok.Data;
 

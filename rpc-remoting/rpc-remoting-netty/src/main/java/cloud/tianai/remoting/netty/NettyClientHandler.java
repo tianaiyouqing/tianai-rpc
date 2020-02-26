@@ -41,8 +41,10 @@ public class NettyClientHandler extends ChannelDuplexHandler {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        remotingDataProcessor.writeMessage(channelAdapter, msg, ctx);
-        super.write(ctx, msg, promise);
+        msg = remotingDataProcessor.writeMessage(channelAdapter, msg, ctx);
+        if (msg != null) {
+            super.write(ctx, msg, promise);
+        }
     }
 
     @Override

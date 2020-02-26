@@ -6,8 +6,6 @@ package cloud.tianai.remoting.api;
  * @Description: Request And Response 数据解析器
  */
 public class RequestResponseRemotingDataProcessor implements RemotingDataProcessor {
-    /** 心跳直接返回的数据. */
-    public static final String HEARTBEAT_RESULT = "heartbeat success";
     private RpcInvocation rpcInvocation;
 
     public RequestResponseRemotingDataProcessor(RpcInvocation rpcInvocation) {
@@ -18,65 +16,12 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
     public void readMessage(Channel channel, Object msg, Object extend) {
         if (msg instanceof Request) {
             // 解析Request
-            Response response = processRequest((Request) msg);
+            Response response = rpcInvocation.invoke((Request) msg);
             channel.write(response);
         } else {
             // 解析Response
             DefaultFuture.received(channel, (Response) msg, true);
         }
-    }
-
-    private Response processRequest(Request request) {
-        Request copyReq = Request.copyRequest(request);
-        Object result;
-        if (request.isHeartbeat()) {
-            // 如果是心跳请求，直接返回
-            result = HEARTBEAT_RESULT;
-        } else {
-            try {
-                result = rpcInvocation.invoke(copyReq);
-            } catch (Throwable e) {
-                // 打印堆栈信息
-                e.printStackTrace();
-                // 异常
-                return warpResponse(e, request);
-            }
-        }
-        return warpResponse(result, request);
-    }
-
-    private Response warpResponse(Throwable e, Request request) {
-        long id = request.getId();
-        String version = request.getVersion();
-        boolean heartbeat = request.isHeartbeat();
-
-        Response response = new Response(id, version);
-        response.setHeartbeat(heartbeat);
-        response.setStatus(Response.SERVER_ERROR);
-        response.setErrorMessage(e.getMessage());
-        return response;
-    }
-
-    private Response warpResponse(Object result, Request request) {
-        Response response;
-        long id = request.getId();
-        String version = request.getVersion();
-        boolean heartbeat = request.isHeartbeat();
-        if (result instanceof Response) {
-            response = (Response) result;
-            response.setId(id);
-            response.setVersion(version);
-        } else {
-            response = new Response(id, version);
-            response.setHeartbeat(heartbeat);
-            response.setResult(result);
-        }
-        return response;
-    }
-
-    @Override
-    public Object writeMessage(Channel channel, Object msg, Object extend) {
-        return null;
     }
 
     @Override

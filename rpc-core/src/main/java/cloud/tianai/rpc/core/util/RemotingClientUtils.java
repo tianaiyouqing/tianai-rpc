@@ -1,15 +1,12 @@
 package cloud.tianai.rpc.core.util;
 
-import cloud.tianai.remoting.api.RemotingClient;
-import cloud.tianai.remoting.api.RemotingConfiguration;
-import cloud.tianai.remoting.api.RequestResponseRemotingDataProcessor;
+import cloud.tianai.remoting.api.*;
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
 import cloud.tianai.rpc.common.KeyValue;
-import cloud.tianai.rpc.common.RpcClientConfiguration;
+import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.constant.CommonConstant;
 import cloud.tianai.rpc.common.exception.RpcException;
-import cloud.tianai.rpc.core.client.proxy.AbstractRpcProxy;
 import cloud.tianai.rpc.core.factory.CodecFactory;
 import cloud.tianai.rpc.core.factory.RemotingClientFactory;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
@@ -26,8 +23,9 @@ public class RemotingClientUtils {
 
     /**
      * 获取远程客户端
+     *
      * @param rpcConfiguration RPC相关配
-     * @param url URL地址
+     * @param url              URL地址
      * @return 远程客户端实例
      */
     public static RemotingClient getRpcClient(RpcClientConfiguration rpcConfiguration, URL url) {
@@ -51,7 +49,8 @@ public class RemotingClientUtils {
             conf.setEncoder(codec.getKey());
             conf.setDecoder(codec.getValue());
             conf.setConnectTimeout(timeout);
-            conf.setRemotingDataProcessor(new RequestResponseRemotingDataProcessor(new AbstractRpcProxy.HeartbeatRpcInvocation()));
+            RemotingDataProcessor remotingDataProcessor = new RequestResponseRemotingDataProcessor(new SimpleHeartbeatRpcInvocation());
+            conf.setRemotingDataProcessor(remotingDataProcessor);
             String client = rpcConfiguration.getProtocol();
             RemotingClient c = RemotingClientFactory.create(client);
             // 启动客户端

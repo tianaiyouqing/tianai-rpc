@@ -4,11 +4,13 @@ import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.remoting.api.Response;
 import cloud.tianai.remoting.api.exception.RpcChannelClosedException;
-import cloud.tianai.rpc.common.RpcClientConfiguration;
+import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.core.util.RemotingClientUtils;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +27,8 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
 
     private final Object lock = new Object();
 
+    private final Set<RpcClientPostProcessor> rpcClientPostProcessors = new HashSet<>(8);
+
     @Override
     public Response request(Request request, Integer timeout, Integer retry) throws TimeoutException {
         return request(request, timeout, retry, retry);
@@ -32,6 +36,9 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
 
     @Override
     public Response request(Request request, Integer timeout, Integer connectRetry, Integer requestRetry) throws TimeoutException {
+        // 请求之前
+        beforeRequest(request);
+
         Object resObj = retryRequest(request, 0, connectRetry, requestRetry);
         Response response;
         if (resObj instanceof Response) {
@@ -41,8 +48,19 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
             response.setResult(resObj);
             response.setStatus(Response.OK);
         }
+        // 请求之后
+        requestFinished(request, response);
         return response;
     }
+
+    protected void requestFinished(Request request, Response response) {
+        rpcClientPostProcessors.forEach(r -> r.requestFinished(request, response));
+    }
+
+    protected void beforeRequest(Request request) {
+        rpcClientPostProcessors.forEach(r -> r.beforeRequest(request));
+    }
+
 
     /**
      * 重试请求
@@ -147,6 +165,13 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
         return lock;
     }
 
+
+    @Override
+    public void addPostProcessor(RpcClientPostProcessor postProcessor) {
+        assert postProcessor != null;
+        rpcClientPostProcessors.remove(postProcessor);
+        rpcClientPostProcessors.add(postProcessor);
+    }
 
     protected RemotingClient createRpcClientIfNecessary(URL url) {
         RpcClientConfiguration rpcConfiguration = getConfig();

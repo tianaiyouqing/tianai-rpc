@@ -1,8 +1,8 @@
 package cloud.tianai.remoting.api;
 
 import lombok.Data;
+import lombok.ToString;
 import lombok.experimental.Accessors;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
@@ -13,9 +13,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * @Description: 请求对象
  */
 @Data
-@Slf4j
 @Accessors(chain = true)
-public class Request implements Serializable {
+@ToString(callSuper = true)
+public class Request extends Header implements Serializable {
 
     private static final AtomicLong INVOKE_ID = new AtomicLong(0);
 

@@ -1,8 +1,11 @@
 package cloud.tianai.rpc.core.template;
 
-import cloud.tianai.rpc.common.RpcClientConfiguration;
+import cloud.tianai.rpc.common.util.CollectionUtils;
+import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.core.loader.RpcPropertiesLoader;
+
+import java.util.List;
 
 /**
  * @Author: 天爱有情
@@ -27,6 +30,11 @@ public class DefaultRpcClientTemplate extends AbstractLoadBalanceRpcClientTempla
         this.url = url;
         // 加载一个Rpc的配置
         RpcPropertiesLoader.loadIfNecessary();
+        // 添加后处理器
+        List<RpcClientPostProcessor> postProcessors = rpcClientConfiguration.getRpcClientPostProcessors();
+        if(CollectionUtils.isNotEmpty(postProcessors)){
+            postProcessors.forEach(this::addPostProcessor);
+        }
         if(!lazyLoadLoadBalance) {
             initLoadBalance();
         }

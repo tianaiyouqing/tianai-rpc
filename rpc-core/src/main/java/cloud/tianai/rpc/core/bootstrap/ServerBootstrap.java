@@ -2,7 +2,8 @@ package cloud.tianai.rpc.core.bootstrap;
 
 import cloud.tianai.remoting.api.*;
 import cloud.tianai.rpc.common.KeyValue;
-import cloud.tianai.rpc.common.RpcServerConfiguration;
+import cloud.tianai.rpc.common.util.CollectionUtils;
+import cloud.tianai.rpc.core.configuration.RpcServerConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.IPUtils;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -132,7 +134,7 @@ public class ServerBootstrap {
                 interfaceClazz.getName());
 
         registry.register(url);
-        rpcInvocation.put(interfaceClazz, ref);
+        rpcInvocation.putInvokeObj(interfaceClazz, ref);
         return this;
     }
 
@@ -149,6 +151,7 @@ public class ServerBootstrap {
         if (port == null) {
             return host;
         }
+        assert host != null;
         return host.concat(":").concat(String.valueOf(port));
     }
 
@@ -159,6 +162,12 @@ public class ServerBootstrap {
                 throw new RpcException("未找到对应的远程server, server=" + s);
             }
             // 启动远程server
+            // 添加RpcInvocation解析器
+            List<RpcInvocationPostProcessor> postProcessors = prop.getInvocationPostProcessors();
+            if(CollectionUtils.isNotEmpty(postProcessors)) {
+                postProcessors.forEach(rpcInvocation :: addPostProcessor);
+            }
+
             // 配置解析器
             RemotingServerConfiguration conf = getRemotingServerConfiguration();
             r.start(conf);
@@ -178,7 +187,9 @@ public class ServerBootstrap {
         // 编码解码器
         remotingServerConfiguration.setEncoder(encoderAndDecoder.getKey());
         remotingServerConfiguration.setDecoder(encoderAndDecoder.getValue());
-        remotingServerConfiguration.setRemotingDataProcessor(new RequestResponseRemotingDataProcessor(rpcInvocation));
+        // 使用工厂创建解析器
+        RemotingDataProcessor remotingDataProcessor =new RequestResponseRemotingDataProcessor(rpcInvocation);
+        remotingServerConfiguration.setRemotingDataProcessor(remotingDataProcessor);
         remotingServerConfiguration.setConnectTimeout(prop.getTimeout());
         remotingServerConfiguration.setIdleTimeout(prop.getTimeout());
         remotingServerConfiguration.setBossThreads(prop.getBossThreads());
