@@ -15,9 +15,15 @@
         <lombok.version>1.16.18</lombok.version>
         <slf4j.version>1.7.25</slf4j.version>
         <commons-lang3.version>3.9</commons-lang3.version>
+        <javassist.version>3.25.0-GA</javassist.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>${javassist.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

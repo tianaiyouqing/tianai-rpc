@@ -6,7 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 public class ClassUtils {
 
     public static <T> T createObject(Class<? extends T> clazz, Object... args) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        if(clazz.isInterface()) {
+        if (clazz.isInterface()) {
             throw new InstantiationException("该class是个接口，不可实例化");
         }
         Class<?>[] types = getType(args);
@@ -16,7 +16,7 @@ public class ClassUtils {
     }
 
     public static Class<?>[] getType(Object[] params) {
-        if(params == null || params.length < 1) {
+        if (params == null || params.length < 1) {
             return new Class<?>[0];
         }
         Class<?>[] classArr = new Class[params.length];
@@ -38,7 +38,34 @@ public class ClassUtils {
     }
 
     public static ClassLoader getClassLoader() {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        ClassLoader classLoader = null;
+        try {
+             classLoader = Thread.currentThread().getContextClassLoader();
+        } catch (Throwable ex) {
+            // Cannot access system ClassLoader - oh well, maybe the caller can live with null...
+        }
         return classLoader;
+    }
+
+    public static ClassLoader getClassLoader(Class<?> clazz) {
+        ClassLoader cl = getClassLoader();
+        if (cl == null) {
+            // No thread context class loader -> use class loader of this class.
+            cl = clazz.getClassLoader();
+            if (cl == null) {
+                // getClassLoader() returning null indicates the bootstrap ClassLoader
+                try {
+                    cl = ClassLoader.getSystemClassLoader();
+                } catch (Throwable ex) {
+                    // Cannot access system ClassLoader - oh well, maybe the caller can live with null...
+                }
+            }
+        }
+
+        return cl;
+    }
+
+    public static ClassLoader getCallerClassLoader(Class<?> caller) {
+        return caller.getClassLoader();
     }
 }

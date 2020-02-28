@@ -9,6 +9,7 @@ import cloud.tianai.rpc.core.template.RpcClientTemplate;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 import static cloud.tianai.rpc.common.constant.CommonConstant.DEFAULT_REQUEST_RETRY;
@@ -22,11 +23,14 @@ import static cloud.tianai.rpc.common.constant.CommonConstant.DEFAULT_REQUEST_TI
 @Slf4j
 public abstract class AbstractRpcProxy<T> implements RpcProxy<T> {
 
+    public static final String TO_STRING_FUN_NAME = "toString";
+    public static final String HASH_CODE_FUN_NAME = "hashCode";
+    public static final String EQUALS_FUN_NAME = "equals";
 
     /**
      * 接口的class类型.
      */
-    protected Class<T> interfaceClass;
+    protected Class<T> interfaceClass ;
     /**
      * 当前URL.
      */
@@ -52,7 +56,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T> {
      * @return
      */
     @Override
-    public T createProxy(Class<T> interfaceClass, RpcClientConfiguration conf, boolean lazyLoadRegistry, boolean lazyStartRpcClient) {
+    public T createProxy(Class<T> interfaceClass, RpcClientConfiguration conf) {
         if (!interfaceClass.isInterface()) {
             // 如果不是接口，直接抛异常
             throw new IllegalArgumentException("创建rpc代理错误，class必须是接口");
@@ -63,7 +67,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T> {
         this.retry = conf.getOrDefault(conf.getRetry(), DEFAULT_REQUEST_RETRY);
         this.url = new URL("tianai-rpc", IPUtils.getHostIp(), 0, interfaceClass.getName());
         // 构建RpcClient模板
-        rpcClientTemplate = createRpcClientTemplate(conf, lazyLoadRegistry, lazyStartRpcClient);
+        rpcClientTemplate = createRpcClientTemplate(conf, conf.isLazyLoadRegistry(), conf.isLazyStartRpcClient());
         return doCreateProxy();
 
     }
@@ -89,6 +93,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T> {
                 .setHeartbeat(false);
         return request;
     }
+
 
     @Override
     public String toString() {

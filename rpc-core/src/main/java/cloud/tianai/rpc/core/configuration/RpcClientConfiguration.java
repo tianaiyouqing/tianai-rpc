@@ -22,6 +22,8 @@ public class RpcClientConfiguration extends RpcConfiguration {
 
     private Integer retry = 3;
 
+    private boolean lazyLoadRegistry = true;
+    private boolean lazyStartRpcClient = true;
     private List<RpcClientPostProcessor> rpcClientPostProcessors = new LinkedList<>();
 
     public void addRpcClientPostProcessor(RpcClientPostProcessor postProcessor) {

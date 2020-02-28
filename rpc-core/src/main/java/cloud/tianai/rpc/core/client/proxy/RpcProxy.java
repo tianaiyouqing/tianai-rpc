@@ -13,9 +13,7 @@ public interface RpcProxy<T> {
      * 创建代理
      * @param interfaceClass 接口class
      * @param conf 配置
-     * @param lazyLoadRegistry 懒加载服务注册
-     * @param lazyStartRpcClient 懒加载rpc客户端
      * @return
      */
-    T createProxy(Class<T> interfaceClass, RpcClientConfiguration conf, boolean lazyLoadRegistry, boolean lazyStartRpcClient);
+    T createProxy(Class<T> interfaceClass, RpcClientConfiguration conf);
 }

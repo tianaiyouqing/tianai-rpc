@@ -1,34 +1,24 @@
-package cloud.tianai.rpc.core.client.proxy.impl;
+package cloud.tianai.rpc.core.client.proxy.impl.javassist;
 
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.remoting.api.Response;
+import cloud.tianai.rpc.common.bytecode.Proxy;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.core.client.proxy.AbstractRpcProxy;
-import lombok.extern.slf4j.Slf4j;
 
-import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
 /**
  * @Author: 天爱有情
- * @Date: 2020/01/28 12:01
- * @Description: JDK自带的RPC代理
+ * @Date: 2020/02/28 23:12
+ * @Description: 字节码代理
  */
-@Slf4j
-public class JdkRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHandler {
-
-    public static final String TO_STRING_FUN_NAME = "toString";
-    public static final String HASH_CODE_FUN_NAME = "hashCode";
-    public static final String EQUALS_FUN_NAME = "equals";
-
+public class JavassistRpcProxy<T> extends AbstractRpcProxy<T> implements InvocationHandler {
     @Override
-    public T doCreateProxy() {
-        @SuppressWarnings("unchecked")
-        T proxy = (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                new Class<?>[]{interfaceClass, Serializable.class}, this);
-        return proxy;
+    protected T doCreateProxy() {
+        //noinspection unchecked
+        return (T) Proxy.getProxy(interfaceClass).newInstance(this);
     }
 
     @Override

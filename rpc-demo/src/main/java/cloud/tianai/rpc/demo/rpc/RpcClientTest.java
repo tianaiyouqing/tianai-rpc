@@ -1,10 +1,12 @@
 package cloud.tianai.rpc.demo.rpc;
 
 import cloud.tianai.remoting.api.*;
+import cloud.tianai.rpc.core.client.proxy.RpcProxyFactory;
+import cloud.tianai.rpc.core.client.proxy.RpcProxyType;
 import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.core.client.proxy.RpcProxy;
-import cloud.tianai.rpc.core.client.proxy.impl.JdkRpcProxy;
+import cloud.tianai.rpc.core.client.proxy.impl.jdk.JdkRpcProxy;
 import cloud.tianai.rpc.core.template.RpcClientPostProcessor;
 
 import java.util.concurrent.TimeUnit;
@@ -58,7 +60,9 @@ public class RpcClientTest {
 
         // 远程 客户端
         RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();
-        Demo proxy = rpcProxy.createProxy(Demo.class, prop, true, true);
+        Demo proxy = RpcProxyFactory.create(Demo.class, prop, RpcProxyType.JAVASSIST_PROXY);
+        proxy.toString();
+
 //        for (int i1 = 0; i1 < 1000; i1++) {
 //            new Thread(() -> {
 //                for (int i2 = 0; i2 < 20; i2++) {
@@ -73,9 +77,12 @@ public class RpcClientTest {
 //            }).start();
 //        }
 
-        RpcProxy<Demo2> rpcProxy2 = new JdkRpcProxy<>();
-        Demo2 proxy2 = rpcProxy2.createProxy(Demo2.class, prop, true, true);
+//        RpcProxy<Demo2> rpcProxy2 = new JdkRpcProxy<>();
+//        Demo2 proxy2 = rpcProxy2.createProxy(Demo2.class, prop);
 
+        Demo2 proxy2 = RpcProxyFactory.create(Demo2.class, prop, RpcProxyType.JAVASSIST_PROXY);
+        proxy2.toString();
+        proxy2.hashCode();
         IntStream.range(0, 5).forEach(i -> {
             String res = proxy.sayHello();
             System.out.println("返回消息:" + res);
