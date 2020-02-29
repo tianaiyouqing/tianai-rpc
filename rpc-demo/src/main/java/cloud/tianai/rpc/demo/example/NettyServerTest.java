@@ -56,6 +56,11 @@ public class NettyServerTest {
         }
 
         @Override
+        public void sendError(Channel channel, Throwable ex, Object data) {
+
+        }
+
+        @Override
         public boolean support(Object msg) {
             return false;
         }

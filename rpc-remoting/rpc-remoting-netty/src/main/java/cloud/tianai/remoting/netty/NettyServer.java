@@ -118,7 +118,7 @@ public class NettyServer extends AbstractRemotingServer {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast("Encoder", new NettyEncoder(config.getEncoder()));
+                        pipeline.addLast("Encoder", new NettyEncoder(config.getEncoder(),  config.getRemotingDataProcessor()));
                         pipeline.addLast("Decoder", new NettyDecoder(config.getDecoder()));
                         pipeline.addLast("server-idle-handler",
                                 new IdleStateHandler(0, 0, config.getServerIdleTimeout(), MILLISECONDS));

@@ -72,7 +72,7 @@ public class Response extends Header implements Serializable {
 
 
     /** ID. */
-    private long id;
+    private Long id;
     /** 版本. */
     private String version;
     /** 心跳. */
@@ -84,11 +84,15 @@ public class Response extends Header implements Serializable {
     private Object result;
 
     private String errorMessage;
-    public Response(long id) {
+
+    public Response() {
+    }
+
+    public Response(Long id) {
         this.id = id;
     }
 
-    public Response(long id, String version) {
+    public Response(Long id, String version) {
         this.id = id;
         this.version = version;
     }

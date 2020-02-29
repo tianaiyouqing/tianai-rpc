@@ -53,7 +53,6 @@ public class NettyClientHandler extends ChannelDuplexHandler {
         super.exceptionCaught(ctx, cause);
     }
 
-
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
@@ -65,6 +64,7 @@ public class NettyClientHandler extends ChannelDuplexHandler {
             super.userEventTriggered(ctx, evt);
         }
     }
+
 }
 
 

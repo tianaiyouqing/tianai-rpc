@@ -38,6 +38,13 @@ public interface RemotingDataProcessor {
     void sendHeartbeat(Channel channel, Object extend);
 
     /**
+     * 发送异常
+     * @param ex
+     * @param data
+     */
+    void sendError(Channel channel, Throwable ex, Object data);
+
+    /**
      * 该解析器是否支持给类型的数据解析
      * @param msg
      * @return

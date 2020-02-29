@@ -4,7 +4,6 @@ import cloud.tianai.remoting.api.RemotingDataProcessor;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,6 +51,8 @@ public class NettyServerHandler extends ChannelDuplexHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        // 回送异常信息
+
         ctx.close();
         super.exceptionCaught(ctx, cause);
     }
@@ -66,6 +67,7 @@ public class NettyServerHandler extends ChannelDuplexHandler {
             super.userEventTriggered(ctx, evt);
         }
     }
+
 
     public static class NettyRunnable implements Runnable {
         private ChannelHandlerContext ctx;

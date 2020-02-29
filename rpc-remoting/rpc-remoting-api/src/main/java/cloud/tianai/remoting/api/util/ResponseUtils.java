@@ -32,6 +32,28 @@ public class ResponseUtils {
         return response;
     }
 
+
+    public static Response warpResponse(Throwable e, Response res) {
+        Throwable targetException;
+        if (e instanceof InvocationTargetException) {
+            targetException = ((InvocationTargetException) e).getTargetException();
+        }else {
+            targetException = e;
+        }
+
+        long id = res.getId();
+        String version = res.getVersion();
+        boolean heartbeat = res.isHeartbeat();
+
+        Response response = new Response(id, version);
+        response.setHeartbeat(heartbeat);
+        response.setStatus(Response.SERVER_ERROR);
+        response.setErrorMessage(targetException.getLocalizedMessage());
+        response.setResult(targetException);
+        return response;
+    }
+
+
     public static Response warpResponse(Object result, Request request) {
         Response response;
         long id = request.getId();

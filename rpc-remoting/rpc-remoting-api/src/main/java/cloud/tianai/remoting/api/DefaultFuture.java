@@ -2,10 +2,12 @@ package cloud.tianai.remoting.api;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -43,7 +45,18 @@ public class DefaultFuture extends CompletableFuture<Object> {
 
     public static void received(Channel channel, Response response, boolean timeout) {
         try {
-            DefaultFuture future = FUTURES.remove(response.getId());
+            Long id = response.getId();
+            if (Objects.isNull(id)) {
+                String errorMessage = response.getErrorMessage();
+                if (StringUtils.isNotBlank(errorMessage)){
+                    if (log.isErrorEnabled()){
+                        log.error("TIANAI-RPC 接受到数据， id为空， 异常信息为: {}", errorMessage);
+                    }else {
+                        System.out.println("TIANAI-RPC 接受到数据， id为空， 异常信息为:" + errorMessage);
+                    }
+                }
+            }
+            DefaultFuture future = FUTURES.remove(id);
             if (future != null) {
                 future.doReceived(response);
             } else if (response.isHeartbeat()) {
