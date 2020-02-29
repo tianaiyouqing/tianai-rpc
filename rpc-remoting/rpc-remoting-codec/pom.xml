@@ -12,6 +12,7 @@
     <modules>
         <module>rpc-remoting-codec-api</module>
         <module>rpc-remoting-codec-hessian2</module>
+        <module>rpc-remoting-codec-protostuff</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>rpc-remoting-codec</artifactId>
