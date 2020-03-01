@@ -25,7 +25,8 @@ public class RpcServerConfiguration extends RpcConfiguration {
 
     /** boss线程. */
     private Integer bossThreads = 1;
-
+    /** 心跳时间，推荐使用默认的. */
+    private Integer idleTimeout;
     private List<RpcInvocationPostProcessor> invocationPostProcessors = new LinkedList<>();
 
     public void addRpcInvocationPostProcessor(RpcInvocationPostProcessor rpcInvocationPostProcessor) {
