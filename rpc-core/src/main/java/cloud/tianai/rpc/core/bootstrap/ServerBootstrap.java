@@ -191,7 +191,7 @@ public class ServerBootstrap {
         RemotingDataProcessor remotingDataProcessor =new RequestResponseRemotingDataProcessor(rpcInvocation);
         remotingServerConfiguration.setRemotingDataProcessor(remotingDataProcessor);
         remotingServerConfiguration.setConnectTimeout(prop.getTimeout());
-        remotingServerConfiguration.setIdleTimeout(prop.getIdleTimeout());
+        remotingServerConfiguration.setServerIdleTimeout(prop.getIdleTimeout());
         remotingServerConfiguration.setBossThreads(prop.getBossThreads());
         return remotingServerConfiguration;
     }
