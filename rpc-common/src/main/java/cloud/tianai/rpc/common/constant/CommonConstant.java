@@ -11,6 +11,7 @@ public interface CommonConstant {
      * 重试.
      */
     String RETRY = "retry";
+
     String BACKUP_KEY = "backup";
 
     /**
@@ -45,4 +46,14 @@ public interface CommonConstant {
      * RPC代理的PROTOCOL
      */
     String RPC_PROXY_PROTOCOL = "tianai-rpc";
+
+    /**
+     * 权重的key值
+     */
+    String WEIGHT_KEY = "weight";
+
+    /**
+     * 默认权重值
+     */
+    Integer DEFAULT_WEIGHT = 100;
 }

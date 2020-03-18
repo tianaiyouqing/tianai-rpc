@@ -3,6 +3,7 @@ package cloud.tianai.rpc.core.util;
 import cloud.tianai.remoting.api.*;
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
 import cloud.tianai.rpc.common.KeyValue;
+import cloud.tianai.rpc.core.bootstrap.Bootstrap;
 import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.constant.CommonConstant;
@@ -55,6 +56,9 @@ public class RemotingClientUtils {
             RemotingClient c = RemotingClientFactory.create(client);
             // 启动客户端
             if (c != null) {
+                // 设置权重
+                c.setWeight(url.getParameter(CommonConstant.WEIGHT_KEY, CommonConstant.DEFAULT_WEIGHT));
+
                 c.start(conf);
             } else {
                 throw new RpcRemotingException("无法创建对应的 远程客户端 ， client=" + client);

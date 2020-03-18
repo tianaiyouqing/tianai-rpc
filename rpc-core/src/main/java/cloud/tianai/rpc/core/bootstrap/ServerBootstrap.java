@@ -2,6 +2,8 @@ package cloud.tianai.rpc.core.bootstrap;
 
 import cloud.tianai.remoting.api.*;
 import cloud.tianai.rpc.common.KeyValue;
+import cloud.tianai.rpc.common.constant.CommonConstant;
+import cloud.tianai.rpc.common.util.ClassUtils;
 import cloud.tianai.rpc.common.util.CollectionUtils;
 import cloud.tianai.rpc.core.configuration.RpcServerConfiguration;
 import cloud.tianai.rpc.common.URL;
@@ -14,6 +16,7 @@ import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcServerHolder;
 import cloud.tianai.rpc.core.util.RegistryUtils;
 import cloud.tianai.rpc.registory.api.Registry;
+import cloud.tianai.rpc.registory.api.exception.RpcRegistryException;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import lombok.Getter;
@@ -48,8 +51,7 @@ public class ServerBootstrap {
     private AtomicBoolean start = new AtomicBoolean(false);
 
     private DefaultRpcInvocation rpcInvocation = new DefaultRpcInvocation();
-    Map<Class<?>, Object> temporaryObjectMap = new ConcurrentHashMap<>(256);
-
+    Map<URL, Object> temporaryObjectMap = new ConcurrentHashMap<>(256);
     public ServerBootstrap server(String server) {
         prop.setProtocol(server);
         return this;
@@ -122,17 +124,47 @@ public class ServerBootstrap {
         return remotingServer.getChannel();
     }
 
+
     public ServerBootstrap register(Class<?> interfaceClazz, Object ref) {
-        if (!isStart()) {
-            // 没有启动的话，先存放到临时文件中
-            temporaryObjectMap.put(interfaceClazz, ref);
-            return this;
-        }
+        register(interfaceClazz, ref, CommonConstant.DEFAULT_WEIGHT);
+        return this;
+    }
+
+    public ServerBootstrap register(Class<?> interfaceClazz, Object ref, Integer weight) {
+        register(interfaceClazz, ref, Collections.singletonMap(CommonConstant.WEIGHT_KEY, String.valueOf(weight)));
+        return this;
+    }
+
+    public ServerBootstrap register(Class<?> interfaceClazz, Object ref, Map<String, String> parameters) {
         URL url = new URL(remotingServer.getRemotingType(),
                 prop.getHost(),
                 prop.getPort(),
-                interfaceClazz.getName());
+                interfaceClazz.getName(),
+                parameters);
 
+        if (!isStart()) {
+            // 没有启动的话，先存放到临时文件中
+            temporaryObjectMap.put(url, ref);
+            return this;
+        }
+
+        registry.register(url);
+        rpcInvocation.putInvokeObj(interfaceClazz, ref);
+        return this;
+    }
+
+    public ServerBootstrap register(URL url, Object ref) {
+        if (!isStart()) {
+            // 没有启动的话，先存放到临时文件中
+            temporaryObjectMap.put(url, ref);
+            return this;
+        }
+        Class<?> interfaceClazz;
+        try {
+            interfaceClazz = ClassUtils.forName(url.getPath());
+        } catch (ClassNotFoundException e) {
+            throw new RpcRegistryException("注册地址失败， path指定的值必须是class类型，且可被找到, path=" + url.getPath(), e);
+        }
         registry.register(url);
         rpcInvocation.putInvokeObj(interfaceClazz, ref);
         return this;

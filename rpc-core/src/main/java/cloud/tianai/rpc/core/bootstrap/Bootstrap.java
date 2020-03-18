@@ -7,6 +7,7 @@ import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.core.loader.RpcPropertiesLoader;
 import cloud.tianai.rpc.core.factory.RemotingClientFactory;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
+import lombok.Getter;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,6 +29,7 @@ public class Bootstrap {
      * 当前URL.
      */
     private URL url;
+    @Getter
     private RemotingConfiguration conf = new RemotingConfiguration();
     private String client = "netty";
     private String codec = "hessian2";

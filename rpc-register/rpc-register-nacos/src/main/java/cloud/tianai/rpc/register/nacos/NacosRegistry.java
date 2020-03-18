@@ -42,7 +42,7 @@ public class NacosRegistry extends AbstractRegistry {
     public static final String PROTOCOL = "nacos";
     public static final String NACOS_UP_STATUS = "UP";
     public static final String NACOS_DOWN_STATUS = "DOWN";
-    public static final String URL_TO_STRING = "url-toString";
+    public static final String URL_KEY = "url";
     public static final String DEFAULT_GROUP_NAME = "DEFAULT_GROUP";
     private String groupName = DEFAULT_GROUP_NAME;
 
@@ -58,7 +58,7 @@ public class NacosRegistry extends AbstractRegistry {
         Instance instance = new Instance();
         instance.setIp(url.getHost());
         instance.setPort(url.getPort());
-        instance.setMetadata(Collections.singletonMap(URL_TO_STRING, url.toString()));
+        instance.setMetadata(Collections.singletonMap(URL_KEY, url.toFullString()));
         return instance;
     }
 
@@ -98,7 +98,7 @@ public class NacosRegistry extends AbstractRegistry {
 
         List<URL> urls = new ArrayList<>(instances.size());
         for (Instance instance : instances) {
-            String urlStr = instance.getMetadata().get(URL_TO_STRING);
+            String urlStr = instance.getMetadata().get(URL_KEY);
             if (StringUtils.isNotBlank(urlStr)) {
                 urls.add(URL.valueOf(urlStr));
             }

@@ -7,6 +7,7 @@ import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.core.client.proxy.RpcProxy;
 import cloud.tianai.rpc.core.client.proxy.impl.jdk.JdkRpcProxy;
+import cloud.tianai.rpc.core.context.RpcContext;
 import cloud.tianai.rpc.core.template.RpcClientPostProcessor;
 
 import java.util.concurrent.TimeUnit;
@@ -40,20 +41,21 @@ public class RpcClientTest {
         prop.setTimeout(5000);
         prop.setRequestTimeout(3000);
         prop.setProtocol("netty");
+        prop.setLoadBalance("random");
         prop.addRpcClientPostProcessor(new RpcClientPostProcessor() {
             @Override
             public void beforeRequest(Request request) {
-                request.setHeader("xid", "xid-123123123");
-                System.out.println("before Request ==>" + request);
+                // 添加附加数据
+                RpcContext.getRpcContext().setAttachment("bbb", "hello");
             }
 
             @Override
             public void requestFinished(Request request, Response response) {
-                System.out.println("request Finished, request:" + request +", response:" + response);
+
             }
         });
-        URL nacosConf = new URL("zookeeper", "127.0.0.1", 2181);
-        nacosConf = nacosConf.addParameter("namespace", "1ca3c65a-92a7-4a09-8de1-4bfe1c89d240");
+        URL nacosConf = new URL("nacos", "127.0.0.1", 8848);
+//        nacosConf = nacosConf.addParameter("namespace", "1ca3c65a-92a7-4a09-8de1-4bfe1c89d240");
         // 注册器
         prop.setRegistryUrl(nacosConf);
         // 注册器
@@ -61,6 +63,9 @@ public class RpcClientTest {
         // 远程 客户端
         RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();
         Demo proxy = RpcProxyFactory.create(Demo.class, prop, RpcProxyType.JAVASSIST_PROXY);
+        // 添加附加数据
+        RpcContext.getRpcContext().setAttachment("AAA", 123);
+        proxy.sayHello();
         proxy.toString();
 
 //        for (int i1 = 0; i1 < 1000; i1++) {
