@@ -9,6 +9,8 @@
 - 实现了基于轮询策略 和 随机权重策略 的负载均衡
 - 使用Netty自带的心跳机制实现心跳机制
 - 实现网络抖动后造成的链接断开后重连
+- 增加拦截器功能，自定义逻辑以及整合其他框架更加方便
+- 基于SPI的模块化管理，更加方便扩展模块
 
 > 实现调用demo
 - server端
@@ -18,21 +20,17 @@ public class RpcServerImplTest2 {
     CountDownLatch countDownLatch = new CountDownLatch(1);
 
     public static void main(String[] args) throws InterruptedException {
-        new Thread(() -> {
-            ServerBootstrap serverBootstrap = new ServerBootstrap();
-            serverBootstrap.codec("hessian2")
-                    .timeout(5000)
-                    // 设置服务注册为zookeeper， 支持zookeeper和nacos两个服务注册
-                    .registry(new URL("zookeeper", "127.0.0.1", 2181))
-                    .server("netty")
-                    .port(20881)
-                    .start();
-            // 注册
-            serverBootstrap.register(Demo.class, new DemoImpl());
-            System.out.println("启动成功");
-        }).start();
-
-        TimeUnit.HOURS.sleep(1);
+        ServerBootstrap serverBootstrap = new ServerBootstrap();
+        serverBootstrap.codec("hessian2")
+                .timeout(5000)
+                // 设置服务注册为zookeeper， 支持zookeeper和nacos两个服务注册
+                .registry(new URL("zookeeper", "127.0.0.1", 2181))
+                .server("netty")
+                .port(20881)
+                .start();
+        // 注册
+        serverBootstrap.register(Demo.class, new DemoImpl());
+        System.out.println("启动成功");
     }
 }
 ```
@@ -63,8 +61,7 @@ public class RpcClientTest {
         // 注册器
 
         // 远程 客户端
-        RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();
-        Demo proxy = rpcProxy.createProxy(Demo.class, prop, true, true);
+        Demo proxy = RpcProxyFactory.create(Demo.class, prop, RpcProxyType.JDK_PROXY);
         for (int i = 0; i < 20; i++) {
             // 执行RPC请求
             String res = proxy.sayHello();
