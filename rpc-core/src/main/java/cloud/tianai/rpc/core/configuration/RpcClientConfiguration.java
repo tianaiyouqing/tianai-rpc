@@ -4,7 +4,7 @@ package cloud.tianai.rpc.core.configuration;
 import cloud.tianai.rpc.common.configuration.RpcConfiguration;
 import cloud.tianai.rpc.common.sort.OrderComparator;
 import cloud.tianai.rpc.core.context.RpcContextClientPostProcessor;
-import cloud.tianai.rpc.core.template.RpcClientPostProcessor;
+import cloud.tianai.remoting.api.RpcClientPostProcessor;
 import lombok.Data;
 
 import java.util.ArrayList;

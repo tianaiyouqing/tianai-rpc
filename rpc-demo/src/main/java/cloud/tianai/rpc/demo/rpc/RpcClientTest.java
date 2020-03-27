@@ -8,7 +8,7 @@ import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.core.client.proxy.RpcProxy;
 import cloud.tianai.rpc.core.client.proxy.impl.jdk.JdkRpcProxy;
 import cloud.tianai.rpc.core.context.RpcContext;
-import cloud.tianai.rpc.core.template.RpcClientPostProcessor;
+import cloud.tianai.remoting.api.RpcClientPostProcessor;
 
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;

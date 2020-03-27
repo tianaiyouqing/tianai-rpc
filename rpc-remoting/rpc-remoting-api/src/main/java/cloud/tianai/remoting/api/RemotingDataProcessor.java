@@ -32,7 +32,7 @@ public interface RemotingDataProcessor {
     /**
      * 发送心跳请求
      * @param channel
-     * @param msg
+     * @param
      * @param extend
      */
     void sendHeartbeat(Channel channel, Object extend);
@@ -49,5 +49,18 @@ public interface RemotingDataProcessor {
      * @param msg
      * @return
      */
-    boolean support(Object msg);
+    default boolean support(Object msg) {
+        for (Class<?> supportParam : getSupportParams()) {
+            if (supportParam.isInstance(msg)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 获取支持解析的参数
+     * @return
+     */
+    Class<?>[] getSupportParams();
 }

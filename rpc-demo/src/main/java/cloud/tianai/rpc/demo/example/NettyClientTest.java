@@ -62,5 +62,10 @@ public class NettyClientTest {
             return true;
         }
 
+        @Override
+        public Class<?>[] getSupportParams() {
+            return new Class[0];
+        }
+
     }
 }

@@ -2,6 +2,8 @@ package cloud.tianai.remoting.api;
 
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
 import cloud.tianai.remoting.api.util.ResponseUtils;
+import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
+import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.ResultSet;
@@ -15,7 +17,7 @@ import java.util.Objects;
 @Slf4j
 public class RequestResponseRemotingDataProcessor implements RemotingDataProcessor {
     private RpcInvocation rpcInvocation;
-
+    public static final Class<?>[] SUPPORT_PARAMS_CLASS = new Class[]{Request.class, Response.class};
     public RequestResponseRemotingDataProcessor(RpcInvocation rpcInvocation) {
         this.rpcInvocation = rpcInvocation;
     }
@@ -81,8 +83,7 @@ public class RequestResponseRemotingDataProcessor implements RemotingDataProcess
     }
 
     @Override
-    public boolean support(Object msg) {
-        // 只支持 Request 和 Response
-        return msg instanceof Request || msg instanceof Response;
+    public Class<?>[] getSupportParams() {
+        return SUPPORT_PARAMS_CLASS;
     }
 }

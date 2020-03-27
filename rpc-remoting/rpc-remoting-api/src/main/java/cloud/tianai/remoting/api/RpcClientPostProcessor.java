@@ -1,7 +1,4 @@
-package cloud.tianai.rpc.core.template;
-
-import cloud.tianai.remoting.api.Request;
-import cloud.tianai.remoting.api.Response;
+package cloud.tianai.remoting.api;
 
 /**
  * @Author: 天爱有情

@@ -3,7 +3,7 @@ package cloud.tianai.rpc.core.context;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.remoting.api.Response;
 import cloud.tianai.rpc.common.sort.Ordered;
-import cloud.tianai.rpc.core.template.RpcClientPostProcessor;
+import cloud.tianai.remoting.api.RpcClientPostProcessor;
 
 import java.util.Map;
 

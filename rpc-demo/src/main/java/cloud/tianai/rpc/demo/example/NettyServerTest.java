@@ -64,5 +64,10 @@ public class NettyServerTest {
         public boolean support(Object msg) {
             return false;
         }
+
+        @Override
+        public Class<?>[] getSupportParams() {
+            return new Class[0];
+        }
     }
 }
