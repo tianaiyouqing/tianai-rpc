@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,34 +39,14 @@ public class RpcPropertiesLoader {
      * 是否已加载，如果已加载则不会再加载.
      */
     private static AtomicBoolean load = new AtomicBoolean(false);
+
     @Getter
-    private static Map<String, List<File>> loadFiles = new ConcurrentHashMap<>();
-    @Getter
-    private static Map<String, Properties> loadProperties;
+    private static Map<String, Properties> loadProperties = new ConcurrentHashMap<>();
 
     public static void loadIfNecessary() {
         if (!load.compareAndSet(false, true)) {
             return;
         }
-        Enumeration<URL> resources;
-        try {
-            resources = ClassUtils.getClassLoader().getResources(PROPERTIES_PATH);
-        } catch (IOException e) {
-            // 不做处理
-            log.error("加载{}异常e={}", PROPERTIES_PATH, e);
-            return;
-        }
-        if (resources != null && resources.hasMoreElements()) {
-            while (resources.hasMoreElements()) {
-                URL url = resources.nextElement();
-                loadFiles(url);
-            }
-        }
-
-        // 读取URL
-        // 把URL转换成properties
-        loadProperties = converterProperties(loadFiles);
-
         // 解析服务注册
         processRegistry();
         // 解析远程server
@@ -74,25 +55,6 @@ public class RpcPropertiesLoader {
         processRemotingClient();
         // 解析序列化
         processCodec();
-    }
-
-    private static void loadFiles(URL resource) {
-        String filePath = resource.getFile();
-        File dirFile = new File(filePath);
-        if (!dirFile.isDirectory()) {
-            // 不是文件夹直接返回
-            return;
-        }
-        File[] files = dirFile.listFiles();
-        if (files == null) {
-            // 如果文件是空，直接返回
-            return;
-        }
-        for (File file : files) {
-            String name = file.getName();
-            List<File> list = loadFiles.computeIfAbsent(name, (k) -> new LinkedList<File>());
-            list.add(file);
-        }
     }
 
     private static void processCodec() {
@@ -153,19 +115,46 @@ public class RpcPropertiesLoader {
     }
 
     private static void processProperties(String name, int splitLen, Consumer<Map<String, String[]>> consumer) {
-        Properties properties = loadProperties.get(name);
-        if (properties != null) {
-            Map<String, String[]> consumerData = new HashMap<>();
-            properties.forEach((k, v) -> {
-                String[] split = SPLIT_PATTERN.split(String.valueOf(v));
-                if (split.length != splitLen) {
-                    throw new IllegalStateException("解析 [" + k + "] 失败， 匹配规则错误，" +
-                            " data=" + v + ", splitLen=" + splitLen + ", splitFlag=" + SPLIT_PATTERN);
-                }
-                consumerData.put(String.valueOf(k), split);
-            });
-            consumer.accept(consumerData);
+        Properties properties = loadProperties.computeIfAbsent(name, k -> {
+            Properties prop = new Properties();
+            return loadProperties(k, prop);
+        });
+
+        Map<String, String[]> consumerData = new HashMap<>();
+        properties.forEach((k, v) -> {
+            String[] split = SPLIT_PATTERN.split(String.valueOf(v));
+            if (split.length != splitLen) {
+                throw new IllegalStateException("解析 [" + k + "] 失败， 匹配规则错误，" +
+                        " data=" + v + ", splitLen=" + splitLen + ", splitFlag=" + SPLIT_PATTERN);
+            }
+            consumerData.put(String.valueOf(k), split);
+        });
+        consumer.accept(consumerData);
+    }
+
+    private static Properties loadProperties(String name, Properties prop) {
+        Enumeration<URL> resources;
+        try {
+            resources = ClassUtils.getClassLoader().getResources(PROPERTIES_PATH.concat(name));
+        } catch (IOException e) {
+            // 不做处理
+            log.error("加载{}异常e={}", PROPERTIES_PATH, e);
+            return prop;
         }
+
+        if (resources != null && resources.hasMoreElements()) {
+            while (resources.hasMoreElements()) {
+                URL url = resources.nextElement();
+                try {
+                    InputStream inputStream = url.openStream();
+                    prop.load(inputStream);
+                } catch (IOException e) {
+                    log.error("加载{}异常e={}", PROPERTIES_PATH, e);
+                }
+
+            }
+        }
+        return prop;
     }
 
     private static Map<String, Properties> converterProperties(Map<String, List<File>> loadFiles) {
