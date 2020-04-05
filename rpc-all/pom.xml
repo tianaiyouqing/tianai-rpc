@@ -5,11 +5,15 @@
     <parent>
         <artifactId>tianai-rpc</artifactId>
         <groupId>cloud.tianai.rpc</groupId>
-        <version>1.5.2</version>
+        <version>1.5.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <artifactId>rpc-all</artifactId>
+
+    <properties>
+        <skip_maven_deploy>false</skip_maven_deploy>
+    </properties>
 
     <dependencies>
         <!-- 远程 -->
@@ -32,4 +36,100 @@
             <artifactId>rpc-register-zookeeper</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createSourcesJar>true</createSourcesJar>
+                            <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+                            <artifactSet>
+                                <includes>
+                                    <include>cloud.tianai.rpc.remoting:rpc-remoting-netty</include>
+                                    <include>cloud.tianai.rpc:rpc-core</include>
+                                    <include>cloud.tianai.rpc.register:rpc-register-zookeeper</include>
+                                    <include>cloud.tianai.rpc.remoting.codec:rpc-remoting-codec-hessian2</include>
+                                </includes>
+                            </artifactSet>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>
+                                        META-INF/cloud.tianai.rpc.core.factory.RemotingClientFactory
+                                    </resource>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>
+                                        META-INF/cloud.tianai.rpc.core.factory.RemotingServerFactory
+                                    </resource>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>
+                                        META-INF/cloud.tianai.rpc.core.factory.CodecFactory
+                                    </resource>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>
+                                        META-INF/cloud.tianai.rpc.core.factory.RegistryFactory
+                                    </resource>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven.javadoc.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadoc</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <additionalparam>-Xdoclint:none</additionalparam>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <dependencySourceInclude>cloud.tianai.rpc.remoting:rpc-remoting-*</dependencySourceInclude>
+                                <dependencySourceInclude>cloud.tianai.rpc:rpc-core</dependencySourceInclude>
+                                <dependencySourceInclude>cloud.tianai.rpc.register:rpc-register-*</dependencySourceInclude>
+                                <dependencySourceInclude>cloud.tianai.rpc.remoting.codec:rpc-remoting-codec-*</dependencySourceInclude>
+                            </dependencySourceIncludes>
+                            <show>public</show>
+                            <charset>UTF-8</charset>
+                            <encoding>UTF-8</encoding>
+                            <docencoding>UTF-8</docencoding>
+                            <links>
+                                <link>http://docs.oracle.com/javase/7/docs/api</link>
+                            </links>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
