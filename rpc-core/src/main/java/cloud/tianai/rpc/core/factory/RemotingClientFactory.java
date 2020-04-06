@@ -2,6 +2,7 @@ package cloud.tianai.rpc.core.factory;
 
 import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.rpc.common.exception.RpcException;
+import cloud.tianai.rpc.common.extension.ExtensionLoader;
 import cloud.tianai.rpc.common.util.ClassUtils;
 
 import java.util.HashMap;
@@ -17,6 +18,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RemotingClientFactory {
 
     private static Map<String, Class<? extends RemotingClient>> remotingServerMap = new ConcurrentHashMap<>(2);
+
+    static {
+        // 加载 SPI
+        ExtensionLoader<RemotingClient> extensionLoader = ExtensionLoader.getExtensionLoader(RemotingClient.class);
+        Map<String, Class<? extends RemotingClient>> extensionClasses = extensionLoader.getExtensionClasses();
+        extensionClasses.forEach(RemotingClientFactory::addRemotingClient);
+    }
 
     public static RemotingClient create(String protocol) {
         Class<? extends RemotingClient> remotingClientClazz = remotingServerMap.get(protocol);

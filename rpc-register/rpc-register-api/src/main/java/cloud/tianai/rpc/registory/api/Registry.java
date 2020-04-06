@@ -2,6 +2,7 @@ package cloud.tianai.rpc.registory.api;
 
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
+import cloud.tianai.rpc.common.extension.SPI;
 
 import java.util.List;
 
@@ -10,6 +11,7 @@ import java.util.List;
  * @Date: 2020/01/21 23:23
  * @Description: 注册器
  */
+@SPI
 public interface Registry {
 
     /**

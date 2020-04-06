@@ -1,24 +1,21 @@
 package cloud.tianai.rpc.core.bootstrap;
 
 import cloud.tianai.remoting.api.*;
-import cloud.tianai.rpc.common.KeyValue;
+import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.constant.CommonConstant;
+import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.ClassUtils;
 import cloud.tianai.rpc.common.util.CollectionUtils;
-import cloud.tianai.rpc.core.configuration.RpcServerConfiguration;
-import cloud.tianai.rpc.common.URL;
-import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.util.IPUtils;
+import cloud.tianai.rpc.core.configuration.RpcServerConfiguration;
 import cloud.tianai.rpc.core.factory.CodecFactory;
-import cloud.tianai.rpc.core.loader.RpcPropertiesLoader;
 import cloud.tianai.rpc.core.factory.RemotingServerFactory;
 import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcServerHolder;
 import cloud.tianai.rpc.core.util.RegistryUtils;
 import cloud.tianai.rpc.registory.api.Registry;
 import cloud.tianai.rpc.registory.api.exception.RpcRegistryException;
-import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
-import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
+import cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -103,8 +100,6 @@ public class ServerBootstrap {
         if (!start.compareAndSet(false, true)) {
             throw new RpcException("该服务已经启动，请勿重复启动[host=" + prop.getHost() + ", port=" + prop.getPort() + "]");
         }
-        // 加载一下配置
-        RpcPropertiesLoader.loadIfNecessary();
         // 启动远程server
         startRemotingServer();
         // 启动远程注册器
@@ -212,13 +207,12 @@ public class ServerBootstrap {
         remotingServerConfiguration.setHost(prop.getHost());
         remotingServerConfiguration.setPort(prop.getPort());
         remotingServerConfiguration.setWorkerThreads(prop.getWorkerThread());
-        KeyValue<RemotingDataEncoder, RemotingDataDecoder> encoderAndDecoder = CodecFactory.getCodec(prop.getCodec());
-        if (encoderAndDecoder == null || !encoderAndDecoder.isNotEmpty()) {
+        RemotingDataCodec codec = CodecFactory.getCodec(prop.getCodec());
+        if (codec == null) {
             throw new RpcException("未找到对应的codec， codec=".concat(prop.getCodec()));
         }
         // 编码解码器
-        remotingServerConfiguration.setEncoder(encoderAndDecoder.getKey());
-        remotingServerConfiguration.setDecoder(encoderAndDecoder.getValue());
+        remotingServerConfiguration.setCodec(codec);
         // 使用工厂创建解析器
         RemotingDataProcessor remotingDataProcessor =new RequestResponseRemotingDataProcessor(rpcInvocation);
         remotingServerConfiguration.setRemotingDataProcessor(remotingDataProcessor);

@@ -3,6 +3,7 @@ package cloud.tianai.rpc.core.loadbalance;
 import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.rpc.common.URL;
+import cloud.tianai.rpc.common.extension.SPI;
 
 import java.util.List;
 
@@ -11,6 +12,7 @@ import java.util.List;
  * @Date: 2020/01/28 11:34
  * @Description: 负载均衡器
  */
+@SPI
 public interface LoadBalance {
 
     /**

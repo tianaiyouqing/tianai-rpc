@@ -1,5 +1,6 @@
 package cloud.tianai.rpc.core.factory;
 
+import cloud.tianai.rpc.common.extension.ExtensionLoader;
 import cloud.tianai.rpc.common.util.ClassUtils;
 import cloud.tianai.rpc.registory.api.Registry;
 
@@ -14,6 +15,13 @@ import java.util.Map;
 public class RegistryFactory {
 
     private static Map<String, Class<? extends Registry>> registryClassMap = new HashMap<>(2);
+
+    static {
+        // 加载SPI
+        ExtensionLoader<Registry> extensionLoader = ExtensionLoader.getExtensionLoader(Registry.class);
+        Map<String, Class<? extends Registry>> extensionClasses = extensionLoader.getExtensionClasses();
+        extensionClasses.forEach(RegistryFactory::addRegistry) ;
+    }
 
     public static void addRegistry(String protocol, Class<? extends Registry> registryClass) {
         registryClassMap.remove(protocol);

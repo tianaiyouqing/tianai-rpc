@@ -1,5 +1,6 @@
 package cloud.tianai.remoting.netty;
 
+import cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -11,10 +12,10 @@ import java.util.List;
 @Slf4j
 public class NettyDecoder extends ReplayingDecoder<ByteBuf> {
 
-    private RemotingDataDecoder decode;
+    private RemotingDataCodec codec;
 
-    public NettyDecoder(RemotingDataDecoder decode) {
-        this.decode = decode;
+    public NettyDecoder(RemotingDataCodec codec) {
+        this.codec = codec;
     }
 
 
@@ -23,7 +24,7 @@ public class NettyDecoder extends ReplayingDecoder<ByteBuf> {
         byte[] bytes = new byte[in.readInt()];
         try {
             in.readBytes(bytes);
-            Object decode = this.decode.decode(bytes, Object.class);
+            Object decode = this.codec.getDecoder().decode(bytes, Object.class);
             out.add(decode);
         } catch (Exception e) {
             // 解码异常, 直接打印异常日志

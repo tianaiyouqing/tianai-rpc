@@ -1,5 +1,7 @@
 package cloud.tianai.remoting.api;
 
+import cloud.tianai.rpc.common.extension.SPI;
+
 import java.net.SocketAddress;
 import java.util.concurrent.TimeoutException;
 
@@ -8,6 +10,7 @@ import java.util.concurrent.TimeoutException;
  * @Date: 2020/02/10 13:28
  * @Description: 远程客户端
  */
+@SPI
 public interface RemotingClient extends RemotingEndpoint {
 
     /**

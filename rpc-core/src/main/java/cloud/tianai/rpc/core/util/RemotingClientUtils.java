@@ -11,6 +11,7 @@ import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.core.factory.CodecFactory;
 import cloud.tianai.rpc.core.factory.RemotingClientFactory;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
+import cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import org.apache.commons.lang3.StringUtils;
@@ -38,8 +39,8 @@ public class RemotingClientUtils {
             Integer port = url.getPort();
             int workThreads = rpcConfiguration.getWorkerThread();
             String codecProtocol = rpcConfiguration.getOrDefault(rpcConfiguration.getCodec(), CommonConstant.DEFAULT_CODEC);
-            KeyValue<RemotingDataEncoder, RemotingDataDecoder> codec = CodecFactory.getCodec(codecProtocol);
-            if (codec == null || !codec.isNotEmpty()) {
+            RemotingDataCodec codec = CodecFactory.getCodec(codecProtocol);
+            if (codec == null) {
                 throw new RpcException("未找到对应的codec， protocol=" + codecProtocol);
             }
             Integer timeout = rpcConfiguration.getOrDefault(rpcConfiguration.getTimeout(), CommonConstant.DEFAULT_TIMEOUT);
@@ -47,8 +48,7 @@ public class RemotingClientUtils {
             conf.setHost(host);
             conf.setPort(port);
             conf.setWorkerThreads(workThreads);
-            conf.setEncoder(codec.getKey());
-            conf.setDecoder(codec.getValue());
+            conf.setCodec(codec);
             conf.setConnectTimeout(timeout);
             RemotingDataProcessor remotingDataProcessor = new RequestResponseRemotingDataProcessor(new SimpleHeartbeatRpcInvocation());
             conf.setRemotingDataProcessor(remotingDataProcessor);

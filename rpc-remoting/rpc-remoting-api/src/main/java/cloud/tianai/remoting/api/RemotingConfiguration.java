@@ -1,6 +1,7 @@
 package cloud.tianai.remoting.api;
 
 import cloud.tianai.rpc.common.util.IPUtils;
+import cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import lombok.Data;
@@ -20,10 +21,8 @@ public class RemotingConfiguration {
     private Integer port = 20880;
     /** 工作线程数. */
     private Integer workerThreads = Math.min(Runtime.getRuntime().availableProcessors() + 1, 32);;
-    /** 编码器. */
-    private RemotingDataEncoder encoder;
-    /** 解码器. */
-    private RemotingDataDecoder decoder;
+    /** 编码解码器. */
+    private RemotingDataCodec codec;
     /** 远程数据解析. */
     private RemotingDataProcessor remotingDataProcessor;
     /** 链接超时. */
