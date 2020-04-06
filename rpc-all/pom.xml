@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tianai-rpc</artifactId>
         <groupId>cloud.tianai.rpc</groupId>
-        <version>1.5.4</version>
+        <version>1.5.5</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
@@ -51,11 +51,12 @@
                         </goals>
                         <configuration>
                             <createSourcesJar>true</createSourcesJar>
-                            <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+                            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                             <artifactSet>
                                 <includes>
                                     <include>cloud.tianai.rpc.remoting:rpc-remoting-netty</include>
                                     <include>cloud.tianai.rpc:rpc-core</include>
+                                    <include>cloud.tianai.rpc:rpc-common</include>
                                     <include>cloud.tianai.rpc.register:rpc-register-zookeeper</include>
                                     <include>cloud.tianai.rpc.remoting.codec:rpc-remoting-codec-hessian2</include>
                                 </includes>
