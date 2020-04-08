@@ -4,12 +4,11 @@ import cloud.tianai.remoting.api.*;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.constant.CommonConstant;
 import cloud.tianai.rpc.common.exception.RpcException;
+import cloud.tianai.rpc.common.extension.ExtensionLoader;
 import cloud.tianai.rpc.common.util.ClassUtils;
 import cloud.tianai.rpc.common.util.CollectionUtils;
 import cloud.tianai.rpc.common.util.IPUtils;
 import cloud.tianai.rpc.core.configuration.RpcServerConfiguration;
-import cloud.tianai.rpc.core.factory.CodecFactory;
-import cloud.tianai.rpc.core.factory.RemotingServerFactory;
 import cloud.tianai.rpc.core.holder.RegistryHolder;
 import cloud.tianai.rpc.core.holder.RpcServerHolder;
 import cloud.tianai.rpc.core.util.RegistryUtils;
@@ -184,7 +183,8 @@ public class ServerBootstrap {
 
     private void startRemotingServer() {
         remotingServer = RpcServerHolder.computeIfAbsent(prop.getProtocol(), getServerAddress(), (s, a) -> {
-            RemotingServer r = RemotingServerFactory.create(s);
+            // 通过加载器创建一个新的 远程Server， 不进行缓存
+            RemotingServer r = ExtensionLoader.getExtensionLoader(RemotingServer.class).createExtension(s, false);
             if (Objects.isNull(r)) {
                 throw new RpcException("未找到对应的远程server, server=" + s);
             }
@@ -207,10 +207,10 @@ public class ServerBootstrap {
         remotingServerConfiguration.setHost(prop.getHost());
         remotingServerConfiguration.setPort(prop.getPort());
         remotingServerConfiguration.setWorkerThreads(prop.getWorkerThread());
-        RemotingDataCodec codec = CodecFactory.getCodec(prop.getCodec());
-        if (codec == null) {
-            throw new RpcException("未找到对应的codec， codec=".concat(prop.getCodec()));
-        }
+        ExtensionLoader<RemotingDataCodec> extensionLoader = ExtensionLoader.getExtensionLoader(RemotingDataCodec.class);
+        // 通过扩展器加载 codec， 如果读不到直接抛出异常
+        RemotingDataCodec codec = extensionLoader.getExtension(prop.getCodec());
+
         // 编码解码器
         remotingServerConfiguration.setCodec(codec);
         // 使用工厂创建解析器

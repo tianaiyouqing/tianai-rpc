@@ -4,7 +4,7 @@ import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.RemotingConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
-import cloud.tianai.rpc.core.factory.RemotingClientFactory;
+import cloud.tianai.rpc.common.extension.ExtensionLoader;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
 import lombok.Getter;
 
@@ -63,7 +63,10 @@ public class Bootstrap {
 
     private void startRemotingClient() {
         remotingClient = RpcClientHolder.computeIfAbsent(protocol, url.getAddress(), (p, u) -> {
-            RemotingClient r = RemotingClientFactory.create(protocol);
+            // 加载远程客户端
+            RemotingClient r = ExtensionLoader
+                    .getExtensionLoader(RemotingClient.class)
+                    .createExtension(protocol, false);
             if (Objects.isNull(r)) {
                 throw new RpcException("未找到对应的远程server, protocol=" + protocol);
             }

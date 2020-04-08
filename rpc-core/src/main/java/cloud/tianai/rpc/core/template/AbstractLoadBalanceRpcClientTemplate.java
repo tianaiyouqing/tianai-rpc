@@ -3,8 +3,8 @@ package cloud.tianai.rpc.core.template;
 import cloud.tianai.remoting.api.RemotingClient;
 import cloud.tianai.remoting.api.Request;
 import cloud.tianai.rpc.common.exception.RpcException;
+import cloud.tianai.rpc.common.extension.ExtensionLoader;
 import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
-import cloud.tianai.rpc.core.factory.LoadBalanceFactory;
 import cloud.tianai.rpc.core.loadbalance.LoadBalance;
 import cloud.tianai.rpc.core.loadbalance.impl.RandomLoadBalance;
 
@@ -34,7 +34,8 @@ public abstract class AbstractLoadBalanceRpcClientTemplate extends AbstractRegis
         if (loadBalance == null) {
             RpcClientConfiguration config = getConfig();
             String loadBalanceName = config.getOrDefault(config.getLoadBalance(), RandomLoadBalance.NAME);
-            loadBalance = LoadBalanceFactory.getLoadBalance(loadBalanceName);
+            // 读取 负载均衡
+            loadBalance = ExtensionLoader.getExtensionLoader(LoadBalance.class).getExtension(loadBalanceName);
             if (loadBalance == null) {
                 throw new RpcException("未找到对应的轮询策略, loadBalanceName=" + loadBalanceName);
             }

@@ -1,0 +1,2 @@
+random = cloud.tianai.rpc.core.loadbalance.impl.RandomLoadBalance
+roundrobin = cloud.tianai.rpc.core.loadbalance.impl.RoundRobinLoadBalance

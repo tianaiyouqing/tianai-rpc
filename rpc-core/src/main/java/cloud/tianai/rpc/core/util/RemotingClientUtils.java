@@ -2,18 +2,13 @@ package cloud.tianai.rpc.core.util;
 
 import cloud.tianai.remoting.api.*;
 import cloud.tianai.remoting.api.exception.RpcRemotingException;
-import cloud.tianai.rpc.common.KeyValue;
-import cloud.tianai.rpc.core.bootstrap.Bootstrap;
-import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.constant.CommonConstant;
 import cloud.tianai.rpc.common.exception.RpcException;
-import cloud.tianai.rpc.core.factory.CodecFactory;
-import cloud.tianai.rpc.core.factory.RemotingClientFactory;
+import cloud.tianai.rpc.common.extension.ExtensionLoader;
+import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec;
-import cloud.tianai.rpc.remoting.codec.api.RemotingDataDecoder;
-import cloud.tianai.rpc.remoting.codec.api.RemotingDataEncoder;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -39,10 +34,9 @@ public class RemotingClientUtils {
             Integer port = url.getPort();
             int workThreads = rpcConfiguration.getWorkerThread();
             String codecProtocol = rpcConfiguration.getOrDefault(rpcConfiguration.getCodec(), CommonConstant.DEFAULT_CODEC);
-            RemotingDataCodec codec = CodecFactory.getCodec(codecProtocol);
-            if (codec == null) {
-                throw new RpcException("未找到对应的codec， protocol=" + codecProtocol);
-            }
+
+            // 加载 codec
+            RemotingDataCodec codec = ExtensionLoader.getExtensionLoader(RemotingDataCodec.class).getExtension(codecProtocol);
             Integer timeout = rpcConfiguration.getOrDefault(rpcConfiguration.getTimeout(), CommonConstant.DEFAULT_TIMEOUT);
             RemotingConfiguration conf = new RemotingConfiguration();
             conf.setHost(host);
@@ -53,7 +47,10 @@ public class RemotingClientUtils {
             RemotingDataProcessor remotingDataProcessor = new RequestResponseRemotingDataProcessor(new SimpleHeartbeatRpcInvocation());
             conf.setRemotingDataProcessor(remotingDataProcessor);
             String client = rpcConfiguration.getProtocol();
-            RemotingClient c = RemotingClientFactory.create(client);
+
+            // 加载扩展
+            ExtensionLoader<RemotingClient> extensionLoader = ExtensionLoader.getExtensionLoader(RemotingClient.class);
+            RemotingClient c = extensionLoader.createExtension(client, false);
             // 启动客户端
             if (c != null) {
                 // 设置权重
