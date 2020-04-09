@@ -1,6 +1,6 @@
 package cloud.tianai.rpc.core.client.proxy;
 
-import cloud.tianai.remoting.api.Request;
+import cloud.tianai.rpc.remoting.api.Request;
 import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.util.IPUtils;
@@ -9,7 +9,6 @@ import cloud.tianai.rpc.core.template.RpcClientTemplate;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 import static cloud.tianai.rpc.common.constant.CommonConstant.DEFAULT_REQUEST_RETRY;

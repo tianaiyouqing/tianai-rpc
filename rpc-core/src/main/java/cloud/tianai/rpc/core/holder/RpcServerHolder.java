@@ -1,6 +1,6 @@
 package cloud.tianai.rpc.core.holder;
 
-import cloud.tianai.remoting.api.RemotingServer;
+import cloud.tianai.rpc.remoting.api.RemotingServer;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

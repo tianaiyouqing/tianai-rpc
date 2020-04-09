@@ -1,1 +1,1 @@
-hessian2= cloud.tianai.remoting.codec.hessian2.Hessian2Codec
+hessian2= cloud.tianai.rpc.remoting.codec.hessian2.Hessian2Codec

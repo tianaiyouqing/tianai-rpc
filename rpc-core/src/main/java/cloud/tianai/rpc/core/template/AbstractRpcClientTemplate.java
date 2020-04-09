@@ -1,10 +1,10 @@
 package cloud.tianai.rpc.core.template;
 
-import cloud.tianai.remoting.api.RemotingClient;
-import cloud.tianai.remoting.api.Request;
-import cloud.tianai.remoting.api.Response;
-import cloud.tianai.remoting.api.RpcClientPostProcessor;
-import cloud.tianai.remoting.api.exception.RpcChannelClosedException;
+import cloud.tianai.rpc.remoting.api.RemotingClient;
+import cloud.tianai.rpc.remoting.api.Request;
+import cloud.tianai.rpc.remoting.api.Response;
+import cloud.tianai.rpc.remoting.api.RpcClientPostProcessor;
+import cloud.tianai.rpc.remoting.api.exception.RpcChannelClosedException;
 import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.core.util.RemotingClientUtils;

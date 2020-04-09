@@ -1,7 +1,7 @@
 package cloud.tianai.rpc.core.configuration;
 
 
-import cloud.tianai.remoting.api.RpcInvocationPostProcessor;
+import cloud.tianai.rpc.remoting.api.RpcInvocationPostProcessor;
 import cloud.tianai.rpc.common.configuration.RpcConfiguration;
 import cloud.tianai.rpc.common.sort.OrderComparator;
 import cloud.tianai.rpc.common.util.IPUtils;

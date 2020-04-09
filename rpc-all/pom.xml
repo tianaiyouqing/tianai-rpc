@@ -51,35 +51,43 @@
                         </goals>
                         <configuration>
                             <createSourcesJar>true</createSourcesJar>
-                            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+                            <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
                             <artifactSet>
                                 <includes>
+                                    <include>cloud.tianai.rpc.remoting:rpc-remoting-api</include>
                                     <include>cloud.tianai.rpc.remoting:rpc-remoting-netty</include>
-                                    <include>cloud.tianai.rpc:rpc-core</include>
                                     <include>cloud.tianai.rpc:rpc-common</include>
+                                    <include>cloud.tianai.rpc:rpc-core</include>
+                                    <include>cloud.tianai.rpc.register:rpc-register-api</include>
                                     <include>cloud.tianai.rpc.register:rpc-register-zookeeper</include>
+                                    <include>cloud.tianai.rpc.remoting.codec:rpc-remoting-codec-api</include>
                                     <include>cloud.tianai.rpc.remoting.codec:rpc-remoting-codec-hessian2</include>
                                 </includes>
                             </artifactSet>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>
-                                        META-INF/cloud.tianai.rpc.core.factory.RemotingClientFactory
+                                        META-INF/cloud.tianai.rpc.core.loadbalance.LoadBalance
                                     </resource>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>
-                                        META-INF/cloud.tianai.rpc.core.factory.RemotingServerFactory
+                                        META-INF/cloud.tianai.rpc.remoting.api.RemotingClient
                                     </resource>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>
-                                        META-INF/cloud.tianai.rpc.core.factory.CodecFactory
+                                        META-INF/cloud.tianai.rpc.remoting.api.RemotingServer
                                     </resource>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>
-                                        META-INF/cloud.tianai.rpc.core.factory.RegistryFactory
+                                        META-INF/cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec
+                                    </resource>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>
+                                        META-INF/cloud.tianai.rpc.registory.api.Registry
                                     </resource>
                                 </transformer>
                             </transformers>
@@ -113,7 +121,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <includeDependencySources>true</includeDependencySources>
+                            <includeDependencySources>false</includeDependencySources>
                             <dependencySourceIncludes>
                                 <dependencySourceInclude>cloud.tianai.rpc.remoting:rpc-remoting-*</dependencySourceInclude>
                                 <dependencySourceInclude>cloud.tianai.rpc:rpc-core</dependencySourceInclude>

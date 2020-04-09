@@ -1,6 +1,6 @@
 package cloud.tianai.rpc.core.template;
 
-import cloud.tianai.remoting.api.RemotingClient;
+import cloud.tianai.rpc.remoting.api.RemotingClient;
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;

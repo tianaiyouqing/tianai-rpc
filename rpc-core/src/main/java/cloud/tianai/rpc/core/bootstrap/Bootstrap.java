@@ -1,7 +1,7 @@
 package cloud.tianai.rpc.core.bootstrap;
 
-import cloud.tianai.remoting.api.RemotingClient;
-import cloud.tianai.remoting.api.RemotingConfiguration;
+import cloud.tianai.rpc.remoting.api.RemotingClient;
+import cloud.tianai.rpc.remoting.api.RemotingConfiguration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.extension.ExtensionLoader;

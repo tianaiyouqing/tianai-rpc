@@ -1,1 +1,1 @@
-hessian2= cloud.tianai.remoting.codec.protostuff.ProtostuffCodec
+protostuff= cloud.tianai.rpc.remoting.codec.protostuff.ProtostuffCodec

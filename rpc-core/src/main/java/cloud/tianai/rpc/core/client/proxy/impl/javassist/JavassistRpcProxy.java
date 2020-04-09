@@ -1,7 +1,7 @@
 package cloud.tianai.rpc.core.client.proxy.impl.javassist;
 
-import cloud.tianai.remoting.api.Request;
-import cloud.tianai.remoting.api.Response;
+import cloud.tianai.rpc.remoting.api.Request;
+import cloud.tianai.rpc.remoting.api.Response;
 import cloud.tianai.rpc.common.bytecode.Proxy;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.core.client.proxy.AbstractRpcProxy;

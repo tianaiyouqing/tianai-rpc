@@ -1,6 +1,6 @@
 package cloud.tianai.rpc.core.template;
 
-import cloud.tianai.remoting.api.RpcClientPostProcessor;
+import cloud.tianai.rpc.remoting.api.RpcClientPostProcessor;
 import cloud.tianai.rpc.common.util.CollectionUtils;
 import cloud.tianai.rpc.core.configuration.RpcClientConfiguration;
 import cloud.tianai.rpc.common.URL;
