@@ -14,14 +14,14 @@ public class IdUtils {
     /**
      * 主机和进程的机器码
      */
-    private static final Sequence worker = new Sequence();
+    private static final Sequence WORKER = new Sequence();
 
     public static long getNoRepetitionId() {
-        return worker.nextId();
+        return WORKER.nextId();
     }
 
     public static String getNoRepetitionIdStr() {
-        return String.valueOf(worker.nextId());
+        return String.valueOf(WORKER.nextId());
     }
 
     /**

@@ -25,6 +25,7 @@ public interface RpcClientTemplate {
      * @param request 请求数据
      * @param timeout 请求超时
      * @param retry   重试次数
+     * @throws TimeoutException 超时异常
      * @return 返回数据
      */
     Response request(Request request, Integer timeout, Integer retry) throws TimeoutException;
@@ -42,7 +43,10 @@ public interface RpcClientTemplate {
      */
     Response request(Request request, Integer timeout, Integer connectRetry, Integer requestRetry) throws TimeoutException;
 
-
+    /**
+     * 添加一个处理器
+     * @param postProcessor 后处理器
+     */
     void addPostProcessor(RpcClientPostProcessor postProcessor);
 
     /**

@@ -29,6 +29,11 @@ public abstract class AbstractLoadBalance implements LoadBalance {
         return Math.max(0, weight);
     }
 
-
+    /**
+     * 抽象方法，子类实现，真正调用 负载算法的方法
+     * @param rpcClients 待负载的所有 RpcClient
+     * @param request 请求对象
+     * @return 负载出其中一个 RpcClient
+     */
     protected abstract RemotingClient doSelect(List<RemotingClient> rpcClients, Request request);
 }

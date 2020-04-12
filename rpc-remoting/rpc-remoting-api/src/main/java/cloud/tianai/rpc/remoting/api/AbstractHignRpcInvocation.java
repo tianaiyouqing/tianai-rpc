@@ -114,5 +114,14 @@ public abstract class AbstractHignRpcInvocation implements HighRpcInvocation {
         return response;
     }
 
+
+    /**
+     * 留给子类实现， 真正调用 invoke
+     * @param method 方法
+     * @param invokeObj invoke的对象
+     * @param request 请求对象
+     * @return 执行方法后返回的对象
+     * @throws Exception 执行失败抛出异常
+     */
     protected abstract Object doInvoke(Method method, Object invokeObj, Request request) throws Exception;
 }

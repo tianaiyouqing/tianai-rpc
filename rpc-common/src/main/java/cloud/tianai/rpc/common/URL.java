@@ -194,7 +194,7 @@ public final class URL implements Serializable {
         int i = url.indexOf("?"); // separator between body and parameters
         if (i >= 0) {
             String[] parts = url.substring(i + 1).split("&");
-            parameters = new HashMap<>();
+            parameters = new HashMap<>(8);
             for (String part : parts) {
                 part = part.trim();
                 if (part.length() > 0) {
@@ -262,7 +262,7 @@ public final class URL implements Serializable {
     }
 
     public static Map<String, Map<String, String>> toMethodParameters(Map<String, String> parameters) {
-        Map<String, Map<String, String>> methodParameters = new HashMap<>();
+        Map<String, Map<String, String>> methodParameters = new HashMap<>(16);
         if (parameters != null) {
             String methodsString = parameters.get(METHODS_KEY);
             if (StringUtils.isNotEmpty(methodsString)) {
@@ -293,7 +293,7 @@ public final class URL implements Serializable {
     }
 
     public static void putMethodParameter(String method, String key, String value, Map<String, Map<String, String>> methodParameters) {
-        Map<String, String> subParameter = methodParameters.computeIfAbsent(method, k -> new HashMap<>());
+        Map<String, String> subParameter = methodParameters.computeIfAbsent(method, k -> new HashMap<>(16));
         subParameter.put(key, value);
     }
 
@@ -341,7 +341,7 @@ public final class URL implements Serializable {
         return buildString(appendUser, appendParameter, false, false, parameters);
     }
 
-    private String buildString(boolean appendUser, boolean appendParameter, boolean useIP, boolean useService, String... parameters) {
+    private String buildString(boolean appendUser, boolean appendParameter, boolean useIp, boolean useService, String... parameters) {
         StringBuilder buf = new StringBuilder();
         if (StringUtils.isNotEmpty(protocol)) {
             buf.append(protocol);
@@ -356,7 +356,7 @@ public final class URL implements Serializable {
             buf.append("@");
         }
         String host;
-        if (useIP) {
+        if (useIp) {
             host = getIp();
         } else {
             host = getHost();
@@ -397,8 +397,7 @@ public final class URL implements Serializable {
             List<String> includes = (ArrayUtils.isEmpty(parameters) ? null : Arrays.asList(parameters));
             boolean first = true;
             for (Map.Entry<String, String> entry : new TreeMap<>(getParameters()).entrySet()) {
-                if (StringUtils.isNotEmpty(entry.getKey())
-                        && (includes == null || includes.contains(entry.getKey()))) {
+                if (StringUtils.isNotEmpty(entry.getKey()) && (includes == null || includes.contains(entry.getKey()))) {
                     if (first) {
                         if (concat) {
                             buf.append("?");

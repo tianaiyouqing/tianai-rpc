@@ -34,6 +34,10 @@ public interface Registry {
      */
     boolean isStart();
 
+    /**
+     * 获取对应的协议
+     * @return 具体的协议
+     */
     String getProtocol();
     /**
      * 订阅
@@ -57,7 +61,8 @@ public interface Registry {
 
     /**
      * 初始化
-     * @param url
+     * @param url url参数
+     * @return Registry
      */
     Registry start(URL url);
 

@@ -7,6 +7,10 @@ package cloud.tianai.rpc.remoting.codec.api;
  */
 public interface RemotingDataEncoder {
 
-
+    /**
+     * 编码方法
+     * @param msg 待编码的对象
+     * @return 变化后转换成的字节数组
+     */
     byte[] encode(Object msg);
 }

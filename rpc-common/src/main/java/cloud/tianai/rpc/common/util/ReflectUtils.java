@@ -965,7 +965,7 @@ public final class ReflectUtils {
     }
 
     public static Object getEmptyObject(Class<?> returnType) {
-        return getEmptyObject(returnType, new HashMap<>(), 0);
+        return getEmptyObject(returnType, new HashMap<>(8), 0);
     }
 
     private static Object getEmptyObject(Class<?> returnType, Map<Class<?>, Object> emptyInstances, int level) {
@@ -1117,7 +1117,7 @@ public final class ReflectUtils {
     }
 
     public static Map<String, Field> getBeanPropertyFields(Class cl) {
-        Map<String, Field> properties = new HashMap<String, Field>();
+        Map<String, Field> properties = new HashMap<String, Field>(8);
         for (; cl != null; cl = cl.getSuperclass()) {
             Field[] fields = cl.getDeclaredFields();
             for (Field field : fields) {
@@ -1136,7 +1136,7 @@ public final class ReflectUtils {
     }
 
     public static Map<String, Method> getBeanPropertyReadMethods(Class cl) {
-        Map<String, Method> properties = new HashMap<String, Method>();
+        Map<String, Method> properties = new HashMap<String, Method>(8);
         for (; cl != null; cl = cl.getSuperclass()) {
             Method[] methods = cl.getDeclaredMethods();
             for (Method method : methods) {

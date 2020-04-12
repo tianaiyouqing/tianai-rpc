@@ -16,17 +16,22 @@
  */
 package cloud.tianai.rpc.registory.api;
 
-
 import cloud.tianai.rpc.common.URL;
 
 import java.util.List;
 
 /**
- * NotifyListener. (API, Prototype, ThreadSafe)
- *
+ * @Author: 天爱有情
+ * @Date: 2020/04/12 22:03
+ * @Description: NotifyListener. (API, Prototype, ThreadSafe)
  */
 @FunctionalInterface
 public interface NotifyListener {
 
+    /**
+     * 服务注册监听URLs的变化
+     *
+     * @param urls 变化后的urls
+     */
     void notify(List<URL> urls);
 }

@@ -2,6 +2,11 @@ package cloud.tianai.rpc.remoting.api;
 
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
 
+/**
+ * @Author: 天爱有情
+ * @Date: 2020/04/12 22:09
+ * @Description: 远程 端点相关信息
+ */
 public interface RemotingEndpoint {
     /**
      * 启动远程
@@ -51,13 +56,14 @@ public interface RemotingEndpoint {
     String getRemotingType();
 
     /**
-     * 设置 weight
+     * 设置权重
+     * @param weight 权重，默认100
      */
     void setWeight(int weight);
 
     /**
      * 获取Weight
-     * @return
+     * @return 对应的权重的值，越小越优先
      */
     int getWeight();
 }

@@ -24,5 +24,11 @@ public abstract class AbstractRemotingServer extends AbstractRemotingEndpoint im
         return doStart((RemotingServerConfiguration) config);
     }
 
+    /**
+     * 具体的 server端启动方法，子类实现
+     * @param config 配置消息
+     * @return RemotingChannelHolder
+     * @throws RpcRemotingException 启动失败抛出异常
+     */
     protected abstract RemotingChannelHolder doStart(RemotingServerConfiguration config) throws RpcRemotingException;
 }

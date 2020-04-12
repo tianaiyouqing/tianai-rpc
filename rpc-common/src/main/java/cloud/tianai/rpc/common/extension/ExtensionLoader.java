@@ -319,7 +319,7 @@ public class ExtensionLoader<T> {
      */
     private Map<String, Class<? extends T>> loadExtensionClasses() {
         cacheDefaultExtensionName();
-        Map<String, Class<? extends T>> extensionClasses = new HashMap<>();
+        Map<String, Class<? extends T>> extensionClasses = new HashMap<>(16);
         // 读取 META-INF/tianai-rpc/
         loadDirectory(extensionClasses, RPC_DIRECTORY, type.getName(), true);
         // 读取 META-INF/services/
@@ -376,11 +376,11 @@ public class ExtensionLoader<T> {
      *
      * @param extensionClasses 存储class的map集合
      * @param classLoader      classLoader
-     * @param resourceURL      resource的URL地址
+     * @param resourceUrl      resource的URL地址
      */
-    private void loadResource(Map<String, Class<? extends T>> extensionClasses, ClassLoader classLoader, java.net.URL resourceURL) {
+    private void loadResource(Map<String, Class<? extends T>> extensionClasses, ClassLoader classLoader, java.net.URL resourceUrl) {
         try {
-            InputStream inputStream = resourceURL.openStream();
+            InputStream inputStream = resourceUrl.openStream();
             Properties prop = new Properties();
             prop.load(inputStream);
             prop.forEach((key, value) -> {
@@ -403,14 +403,14 @@ public class ExtensionLoader<T> {
                     }
 
                 } catch (Throwable t) {
-                    IllegalStateException e = new IllegalStateException("Failed to load extension class (interface: " + type + ", class line: " + valueStr + ") in " + resourceURL + ", cause: " + t.getMessage(), t);
+                    IllegalStateException e = new IllegalStateException("Failed to load extension class (interface: " + type + ", class line: " + valueStr + ") in " + resourceUrl + ", cause: " + t.getMessage(), t);
                     exceptions.put(valueStr, e);
                 }
             });
 
         } catch (Throwable t) {
             log.error("Exception occurred when loading extension class (interface: " +
-                    type + ", class file: " + resourceURL + ") in " + resourceURL, t);
+                    type + ", class file: " + resourceUrl + ") in " + resourceUrl, t);
         }
     }
 

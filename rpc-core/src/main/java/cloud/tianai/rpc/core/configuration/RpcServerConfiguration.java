@@ -20,7 +20,7 @@ import java.util.List;
 @Data
 public class RpcServerConfiguration extends RpcConfiguration {
 
-    private static final List<RpcInvocationPostProcessor> commonInvocationPostProcessors = new LinkedList<>();
+    private static final List<RpcInvocationPostProcessor> RPC_INVOCATION_POST_PROCESSORS = new LinkedList<>();
 
     /**
      * Host 地址.
@@ -49,17 +49,17 @@ public class RpcServerConfiguration extends RpcConfiguration {
 
     public static void addCommonRpcInvocationPostProcessor(RpcInvocationPostProcessor commonRpcInvocationPostProcessor) {
         removeCommonRpcInvocationPostProcessor(commonRpcInvocationPostProcessor);
-        commonInvocationPostProcessors.add(commonRpcInvocationPostProcessor);
+        RPC_INVOCATION_POST_PROCESSORS.add(commonRpcInvocationPostProcessor);
     }
 
     public static boolean removeCommonRpcInvocationPostProcessor(RpcInvocationPostProcessor commonRpcInvocationPostProcessor) {
-        return commonInvocationPostProcessors.remove(commonRpcInvocationPostProcessor);
+        return RPC_INVOCATION_POST_PROCESSORS.remove(commonRpcInvocationPostProcessor);
     }
 
     public List<RpcInvocationPostProcessor> getInvocationPostProcessors() {
         List<RpcInvocationPostProcessor> result = new ArrayList<>(getInvocationPostProcessorCount());
         // 先添加公共的
-        result.addAll(commonInvocationPostProcessors);
+        result.addAll(RPC_INVOCATION_POST_PROCESSORS);
         // 再添加自定义的
         result.addAll(invocationPostProcessors);
         // 排序
@@ -69,7 +69,7 @@ public class RpcServerConfiguration extends RpcConfiguration {
 
 
     public int getInvocationPostProcessorCount() {
-        return invocationPostProcessors.size() + commonInvocationPostProcessors.size();
+        return invocationPostProcessors.size() + RPC_INVOCATION_POST_PROCESSORS.size();
     }
 
     public boolean removeInvocationPostProcessor(RpcInvocationPostProcessor rpcInvocationPostProcessor) {

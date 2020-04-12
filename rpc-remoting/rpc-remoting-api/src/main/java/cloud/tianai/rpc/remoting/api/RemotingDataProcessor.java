@@ -37,8 +37,9 @@ public interface RemotingDataProcessor {
 
     /**
      * 发送异常
-     * @param ex
-     * @param data
+     * @param channel channel
+     * @param ex 异常
+     * @param data 扩展data对象
      */
     void sendError(Channel channel, Throwable ex, Object data);
 

@@ -70,7 +70,18 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
         return weight;
     }
 
+
+    /**
+     * 子类实现， 具体的start方法
+     * @param config 启动配置
+     * @return RemotingChannelHolder
+     * @throws RpcRemotingException 启动失败抛出异常
+     */
     protected abstract RemotingChannelHolder doStart(RemotingConfiguration config) throws RpcRemotingException;
 
+    /**
+     * 停止服务
+     * @throws RpcRemotingException 可能会抛出异常
+     */
     protected abstract void doStop() throws RpcRemotingException;
 }

@@ -113,7 +113,7 @@ public abstract class Wrapper {
         c2.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
         c3.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
 
-        Map<String, Class<?>> pts = new HashMap<>(); // <property name, property types>
+        Map<String, Class<?>> pts = new HashMap<>(16); // <property name, property types>
         Map<String, Method> ms = new LinkedHashMap<>(); // <method desc, Method instance>
         List<String> mns = new ArrayList<>(); // method names.
         List<String> dmns = new ArrayList<>(); // declaring method names.

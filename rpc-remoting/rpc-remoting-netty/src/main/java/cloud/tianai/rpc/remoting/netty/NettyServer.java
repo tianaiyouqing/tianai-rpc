@@ -42,7 +42,7 @@ public class NettyServer extends AbstractRemotingServer {
     private InetSocketAddress address;
     private NettyRemotingChannelHolder channelHolder;
     private RemotingServerConfiguration remotingServerConfiguration;
-    // 线程池
+    /** 线程池. */
     ExecutorService threadPool;
 
     @Override

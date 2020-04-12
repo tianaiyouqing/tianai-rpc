@@ -97,12 +97,27 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
-
+    /**
+     * 停止
+     */
     protected abstract void doShutdown();
 
+    /**
+     * 子类实现，具体的start方法
+     * @param url URL参数
+     * @throws TimeoutException 可能会抛出超时异常
+     */
     protected abstract void doStart(URL url) throws TimeoutException;
 
+    /**
+     * 内部实现的具体 服务注册机制
+     * @param url 待注册的URL
+     */
     protected abstract void innerRegister(URL url);
 
+    /**
+     * 订阅服务注册的监听器
+     * @param statusListener 状态监听器
+     */
     protected abstract void doSubscribe(StatusListener statusListener);
 }

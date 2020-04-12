@@ -7,5 +7,12 @@ package cloud.tianai.rpc.remoting.codec.api;
  */
 public interface RemotingDataDecoder {
 
+   /**
+    * 解码
+    * @param data byte数组
+    * @param clazz 要解码后转换成的class
+    * @param <T> 泛型
+    * @return 具体的对象
+    */
    <T> T decode(byte[] data, Class<T> clazz);
 }

@@ -19,7 +19,7 @@ import java.util.List;
 @Data
 public class RpcClientConfiguration extends RpcConfiguration {
 
-    private static final List<RpcClientPostProcessor> commonRpcClientPostProcessors = new LinkedList<>();
+    private static final List<RpcClientPostProcessor> RPC_CLIENT_POST_PROCESSORS = new LinkedList<>();
 
     private String loadBalance;
 
@@ -41,7 +41,7 @@ public class RpcClientConfiguration extends RpcConfiguration {
     public List<RpcClientPostProcessor> getRpcClientPostProcessors() {
         List<RpcClientPostProcessor> result = new ArrayList<>(getRpcClientPostProcessorCount());
         // 先添加公共的
-        result.addAll(commonRpcClientPostProcessors);
+        result.addAll(RPC_CLIENT_POST_PROCESSORS);
         // 再添加自定义的
         result.addAll(rpcClientPostProcessors);
         // 排序
@@ -57,17 +57,17 @@ public class RpcClientConfiguration extends RpcConfiguration {
     }
 
     public int getRpcClientPostProcessorCount() {
-        return commonRpcClientPostProcessors.size() + rpcClientPostProcessors.size();
+        return RPC_CLIENT_POST_PROCESSORS.size() + rpcClientPostProcessors.size();
     }
 
     public static boolean removeCommonRpcClientPostProcessor(RpcClientPostProcessor rpcClientPostProcessor) {
-        return commonRpcClientPostProcessors.remove(rpcClientPostProcessor);
+        return RPC_CLIENT_POST_PROCESSORS.remove(rpcClientPostProcessor);
     }
 
     public static void addCommonRpcClientPostProcessor(RpcClientPostProcessor rpcClientPostProcessor) {
         assert rpcClientPostProcessor != null;
         removeCommonRpcClientPostProcessor(rpcClientPostProcessor);
-        commonRpcClientPostProcessors.add(rpcClientPostProcessor);
+        RPC_CLIENT_POST_PROCESSORS.add(rpcClientPostProcessor);
     }
 
     static {
