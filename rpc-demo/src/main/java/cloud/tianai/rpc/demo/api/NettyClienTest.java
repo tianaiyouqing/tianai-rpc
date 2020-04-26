@@ -1,15 +1,13 @@
 package cloud.tianai.rpc.demo.api;
 
-import cloud.tianai.remoting.api.*;
-import cloud.tianai.remoting.codec.hessian2.Hessian2Decoder;
-import cloud.tianai.remoting.codec.hessian2.Hessian2Encoder;
-import cloud.tianai.remoting.netty.NettyClient;
-import cloud.tianai.rpc.demo.example.Demo;
-import cloud.tianai.rpc.demo.example.NettyClientTest;
+import cloud.tianai.rpc.remoting.codec.hessian2.Hessian2Codec;
+import cloud.tianai.rpc.remoting.netty.NettyClient;
+import cloud.tianai.rpc.remoting.api.RemotingChannelHolder;
+import cloud.tianai.rpc.remoting.api.RemotingServerConfiguration;
+import cloud.tianai.rpc.remoting.api.RequestResponseRemotingDataProcessor;
+import cloud.tianai.rpc.remoting.api.RpcInvocation;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class NettyClienTest {
@@ -21,8 +19,7 @@ public class NettyClienTest {
         config.setHost("127.0.0.1");
         config.setPort(20881);
         config.setWorkerThreads(16);
-        config.setEncoder(new Hessian2Encoder());
-        config.setDecoder(new Hessian2Decoder());
+        config.setCodec(new Hessian2Codec());
         RpcInvocation rpcInvocation = new NettyServerTest.TestRpcInvocation();
         config.setRemotingDataProcessor(new RequestResponseRemotingDataProcessor(rpcInvocation));
         config.setConnectTimeout(3000);

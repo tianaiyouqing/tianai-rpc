@@ -1,13 +1,12 @@
 package cloud.tianai.rpc.core.loadbalance.impl;
 
+import cloud.tianai.rpc.core.loadbalance.AbstractLoadBalance;
 import cloud.tianai.rpc.remoting.api.RemotingClient;
 import cloud.tianai.rpc.remoting.api.Request;
-import cloud.tianai.rpc.core.loadbalance.AbstractLoadBalance;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -21,8 +20,6 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
 
     private static final int RECYCLE_PERIOD = 60000;
     private ConcurrentMap<String, ConcurrentMap<String, WeightedRoundRobin>> methodWeightMap = new ConcurrentHashMap<String, ConcurrentMap<String, WeightedRoundRobin>>();
-    private AtomicBoolean updateLock = new AtomicBoolean();
-
 
     @Override
     public String getName() {
@@ -32,25 +29,24 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
     @Override
     protected RemotingClient doSelect(List<RemotingClient> rpcClients, Request request) {
         String key = request.getInterfaceType().getName() + "." + request.getMethodName();
-        ConcurrentMap<String, WeightedRoundRobin> map = methodWeightMap.get(key);
-        if (map == null) {
-            methodWeightMap.putIfAbsent(key, new ConcurrentHashMap<String, WeightedRoundRobin>(16));
-            map = methodWeightMap.get(key);
-        }
-
+        ConcurrentMap<String, WeightedRoundRobin> map = methodWeightMap.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
         int totalWeight = 0;
         long maxCurrent = Long.MIN_VALUE;
         long now = System.currentTimeMillis();
         RemotingClient selectedRpcClient = null;
         WeightedRoundRobin selectedWrr = null;
-
         for (RemotingClient rpcClient : rpcClients) {
             String id = rpcClient.getId();
-            WeightedRoundRobin weightedRoundRobin = map.get(id);
-            if (weightedRoundRobin == null) {
-                weightedRoundRobin = new WeightedRoundRobin();
-                weightedRoundRobin.setWeight(getWeight(rpcClient));
-                map.putIfAbsent(id, weightedRoundRobin);
+            int weight = getWeight(rpcClient);
+            WeightedRoundRobin weightedRoundRobin = map.computeIfAbsent(id, k -> {
+                WeightedRoundRobin wrr = new WeightedRoundRobin();
+                wrr.setWeight(weight);
+                return wrr;
+            });
+
+            if (weight != weightedRoundRobin.getWeight()) {
+                //weight changed
+                weightedRoundRobin.setWeight(weight);
             }
             long cur = weightedRoundRobin.increaseCurrent();
             weightedRoundRobin.setLastUpdate(now);
@@ -59,21 +55,11 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
                 selectedRpcClient = rpcClient;
                 selectedWrr = weightedRoundRobin;
             }
-            totalWeight += weightedRoundRobin.getWeight();
+            totalWeight += weight;
         }
-
         // 清除一些长时间不使用的 WeightedRoundRobin
-        if (!updateLock.get() && rpcClients.size() != map.size()) {
-            if (updateLock.compareAndSet(false, true)) {
-                try {
-                    // copy -> modify -> update reference
-                    ConcurrentMap<String, WeightedRoundRobin> newMap = new ConcurrentHashMap<>(map);
-                    newMap.entrySet().removeIf(item -> now - item.getValue().getLastUpdate() > RECYCLE_PERIOD);
-                    methodWeightMap.put(key, newMap);
-                } finally {
-                    updateLock.set(false);
-                }
-            }
+        if (rpcClients.size() != map.size()) {
+            map.entrySet().removeIf(item -> now - item.getValue().getLastUpdate() > RECYCLE_PERIOD);
         }
         if (selectedRpcClient != null) {
             selectedWrr.sel(totalWeight);

@@ -31,4 +31,9 @@ public class DemoImpl2 implements Demo2, Serializable {
         System.out.println("返回数据, threadName:" + Thread.currentThread().getName());
         return demoRes;
     }
+
+    @Override
+    public void helloRpc3() {
+        System.out.println("hello RPC 3");
+    }
 }

@@ -1,7 +1,10 @@
 package cloud.tianai.rpc.remoting.api;
 
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
+import static cloud.tianai.rpc.common.constant.CommonConstant.*;
 
 /**
  * @Author: 天爱有情
@@ -9,26 +12,16 @@ import lombok.extern.slf4j.Slf4j;
  * @Description: 抽象的远程server
  */
 @Slf4j
+@Getter
 public abstract class AbstractRemotingServer extends AbstractRemotingEndpoint implements RemotingServer {
-    @Override
-    public RemotingChannelHolder start(RemotingConfiguration config) throws RpcRemotingException {
-        if (config instanceof RemotingServerConfiguration) {
-            return super.start(config);
-        } else {
-            throw new RpcRemotingException("配置 server端需要传入 [RemotingServerConfiguration] 而不是 [RemotingConfiguration]");
-        }
-    }
 
+    /** boss线程数. */
+    private int bossThreads;
+    /** server 心跳超时. */
+    private int serverIdleTimeout;
     @Override
-    protected RemotingChannelHolder doStart(RemotingConfiguration config) throws RpcRemotingException {
-        return doStart((RemotingServerConfiguration) config);
+    protected void prepareStart() {
+        this.bossThreads = getUrl().getParameter(RPC_BOSS_THREAD_KEY, DEFAULT_RPC_BOSS_THREAD);
+        this.serverIdleTimeout = getUrl().getParameter(RPC_SERVER_IDLE_TIMEOUT_KEY, getIdleTimeout() * 3);
     }
-
-    /**
-     * 具体的 server端启动方法，子类实现
-     * @param config 配置消息
-     * @return RemotingChannelHolder
-     * @throws RpcRemotingException 启动失败抛出异常
-     */
-    protected abstract RemotingChannelHolder doStart(RemotingServerConfiguration config) throws RpcRemotingException;
 }

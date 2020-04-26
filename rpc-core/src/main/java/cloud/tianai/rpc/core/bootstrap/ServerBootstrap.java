@@ -20,12 +20,11 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static cloud.tianai.rpc.common.constant.CommonConstant.*;
 
 @Slf4j
 public class ServerBootstrap {
@@ -33,33 +32,50 @@ public class ServerBootstrap {
 
     @Getter
     @Setter
-    private RpcServerConfiguration prop = new RpcServerConfiguration();
+    private URL serverURL = new URL(RPC_PROXY_PROTOCOL, IPUtils.getHostIp(), DEFAULT_SERVER_PORT);
+
+    @Getter
+    @Setter
+    private Map<String, Object> parameters = new HashMap<>(16);
+
+    @Getter
+    @Setter
+    private URL registryURL;
+
+    @Getter
+    @Setter
+    private List<RpcInvocationPostProcessor> postProcessors;
 
     /**
      * 远程Server.
      */
+    @Getter
     private RemotingServer remotingServer;
+
+    /** 服务注册. */
+    @Getter
     private Registry registry;
-    private RemotingChannelHolder channelHolder;
     /**
      * 是否启动.
      */
     private AtomicBoolean start = new AtomicBoolean(false);
 
     private DefaultRpcInvocation rpcInvocation = new DefaultRpcInvocation();
+
     Map<URL, Object> temporaryObjectMap = new ConcurrentHashMap<>(256);
-    public ServerBootstrap server(String server) {
-        prop.setProtocol(server);
+
+    public ServerBootstrap protocol(String protocol) {
+        serverURL.setProtocol(protocol);
         return this;
     }
 
     public ServerBootstrap host(String host) {
-        prop.setHost(host);
+        serverURL.setHost(host);
         return this;
     }
 
     public ServerBootstrap port(Integer port) {
-        prop.setPort(port);
+        serverURL.setPort(port);
         return this;
     }
 
@@ -70,35 +86,38 @@ public class ServerBootstrap {
     }
 
     public ServerBootstrap codec(String codec) {
-        prop.setCodec(codec);
+        parameters.put(CODEC_KEY, codec);
         return this;
     }
 
     public ServerBootstrap registry(URL registryConfig) {
-        prop.setRegistryUrl(registryConfig);
+        this.registryURL = registryConfig;
         return this;
     }
 
     public ServerBootstrap workThreads(Integer threads) {
-        prop.setWorkerThread(threads);
+        parameters.put(RPC_WORKER_THREADS_KEY, threads);
         return this;
     }
 
     public ServerBootstrap bossThreads(Integer threads) {
-        prop.setBossThreads(threads);
+        parameters.put(RPC_BOSS_THREAD_KEY, threads);
         return this;
     }
 
     public ServerBootstrap timeout(Integer timeout) {
-        prop.setTimeout(timeout);
+        parameters.put(TIMEOUT_KEY, timeout);
         return this;
     }
 
 
     public void start() {
         if (!start.compareAndSet(false, true)) {
-            throw new RpcException("该服务已经启动，请勿重复启动[host=" + prop.getHost() + ", port=" + prop.getPort() + "]");
+            throw new RpcException("该服务已经启动，请勿重复启动[host=" + getServerURL().getHost() + ", port=" + getServerURL().getPort() + "]");
         }
+        setDefaultParamsIfAbsent(parameters);
+        // 设置参数
+        serverURL.setParameters(CollectionUtils.toStringValueMap(parameters));
         // 启动远程server
         startRemotingServer();
         // 启动远程注册器
@@ -111,6 +130,15 @@ public class ServerBootstrap {
         }
     }
 
+    private void setDefaultParamsIfAbsent(Map<String, Object> param) {
+        param.putIfAbsent(TIMEOUT_KEY, DEFAULT_TIMEOUT);
+        param.putIfAbsent(WEIGHT_KEY, DEFAULT_WEIGHT);
+        param.putIfAbsent(CODEC_KEY, DEFAULT_CODEC);
+        param.putIfAbsent(RPC_WORKER_THREADS_KEY, DEFAULT_IO_THREADS);
+        param.putIfAbsent(RPC_BOSS_THREAD_KEY, DEFAULT_RPC_BOSS_THREAD);
+        param.putIfAbsent(RPC_IDLE_TIMEOUT_KEY, DEFAULT_RPC_IDLE_TIMEOUT);
+    }
+
     public RemotingChannelHolder getChannel() {
         if (remotingServer == null) {
             return null;
@@ -120,21 +148,20 @@ public class ServerBootstrap {
 
 
     public ServerBootstrap register(Class<?> interfaceClazz, Object ref) {
-        register(interfaceClazz, ref, CommonConstant.DEFAULT_WEIGHT);
+        register(interfaceClazz, ref, null);
         return this;
     }
 
-    public ServerBootstrap register(Class<?> interfaceClazz, Object ref, Integer weight) {
-        register(interfaceClazz, ref, Collections.singletonMap(CommonConstant.WEIGHT_KEY, String.valueOf(weight)));
-        return this;
-    }
+    public ServerBootstrap register(Class<?> interfaceClazz, Object ref, Map<String, Object> parameters) {
+        setDefaultParamsIfAbsent(parameters);
+        // 设置连接超时
+        parameters.putIfAbsent(RPC_CONNECT_TIMEOUT_KEY, DEFAULT_RPC_IDLE_TIMEOUT);
 
-    public ServerBootstrap register(Class<?> interfaceClazz, Object ref, Map<String, String> parameters) {
         URL url = new URL(remotingServer.getRemotingType(),
-                prop.getHost(),
-                prop.getPort(),
+                getServerURL().getHost(),
+                getServerURL().getPort(),
                 interfaceClazz.getName(),
-                parameters);
+                CollectionUtils.toStringValueMap(parameters));
 
         if (!isStart()) {
             // 没有启动的话，先存放到临时文件中
@@ -169,12 +196,12 @@ public class ServerBootstrap {
     }
 
     public String getServerAddress() {
-        String host = prop.getHost();
-        Integer port = prop.getPort();
+        String host = getServerURL().getHost();
+        Integer port = getServerURL().getPort();
         if (host == null) {
             host = IPUtils.getHostIp();
         }
-        if (port == null) {
+        if (port < 0) {
             return host;
         }
         assert host != null;
@@ -182,7 +209,7 @@ public class ServerBootstrap {
     }
 
     private void startRemotingServer() {
-        remotingServer = RpcServerHolder.computeIfAbsent(prop.getProtocol(), getServerAddress(), (s, a) -> {
+        remotingServer = RpcServerHolder.computeIfAbsent(getServerURL().getProtocol(), getServerAddress(), (s, a) -> {
             // 通过加载器创建一个新的 远程Server， 不进行缓存
             RemotingServer r = ExtensionLoader.getExtensionLoader(RemotingServer.class).createExtension(s, false);
             if (Objects.isNull(r)) {
@@ -190,46 +217,48 @@ public class ServerBootstrap {
             }
             // 启动远程server
             // 添加RpcInvocation解析器
-            List<RpcInvocationPostProcessor> postProcessors = prop.getInvocationPostProcessors();
             if(CollectionUtils.isNotEmpty(postProcessors)) {
                 postProcessors.forEach(rpcInvocation :: addPostProcessor);
             }
 
             // 配置解析器
-            RemotingServerConfiguration conf = getRemotingServerConfiguration();
-            r.start(conf);
+            RemotingDataProcessor remotingDataProcessor =new RequestResponseRemotingDataProcessor(rpcInvocation);
+            r.start(getServerURL(), remotingDataProcessor);
             return r;
         });
     }
 
-    private RemotingServerConfiguration getRemotingServerConfiguration() {
-        RemotingServerConfiguration remotingServerConfiguration = new RemotingServerConfiguration();
-        remotingServerConfiguration.setHost(prop.getHost());
-        remotingServerConfiguration.setPort(prop.getPort());
-        remotingServerConfiguration.setWorkerThreads(prop.getWorkerThread());
-        ExtensionLoader<RemotingDataCodec> extensionLoader = ExtensionLoader.getExtensionLoader(RemotingDataCodec.class);
-        // 通过扩展器加载 codec， 如果读不到直接抛出异常
-        RemotingDataCodec codec = extensionLoader.getExtension(prop.getCodec());
-
-        // 编码解码器
-        remotingServerConfiguration.setCodec(codec);
-        // 使用工厂创建解析器
-        RemotingDataProcessor remotingDataProcessor =new RequestResponseRemotingDataProcessor(rpcInvocation);
-        remotingServerConfiguration.setRemotingDataProcessor(remotingDataProcessor);
-        remotingServerConfiguration.setConnectTimeout(prop.getTimeout());
-        remotingServerConfiguration.setServerIdleTimeout(prop.getIdleTimeout());
-        remotingServerConfiguration.setBossThreads(prop.getBossThreads());
-        return remotingServerConfiguration;
-    }
+//    private RemotingServerConfiguration getRemotingServerConfiguration() {
+//        RemotingServerConfiguration remotingServerConfiguration = new RemotingServerConfiguration();
+//        remotingServerConfiguration.setHost(prop.getHost());
+//        remotingServerConfiguration.setPort(prop.getPort());
+//        remotingServerConfiguration.setWorkerThreads(prop.getWorkerThread());
+//        ExtensionLoader<RemotingDataCodec> extensionLoader = ExtensionLoader.getExtensionLoader(RemotingDataCodec.class);
+//        // 通过扩展器加载 codec， 如果读不到直接抛出异常
+//        RemotingDataCodec codec = extensionLoader.getExtension(prop.getCodec());
+//
+//        // 编码解码器
+//        remotingServerConfiguration.setCodec(codec);
+//        // 使用工厂创建解析器
+//
+//        remotingServerConfiguration.setRemotingDataProcessor(remotingDataProcessor);
+//        remotingServerConfiguration.setConnectTimeout(prop.getTimeout());
+//        remotingServerConfiguration.setServerIdleTimeout(prop.getIdleTimeout());
+//        remotingServerConfiguration.setBossThreads(prop.getBossThreads());
+//        return remotingServerConfiguration;
+//    }
 
     private void startRegistry() {
-        registry = RegistryHolder.computeIfAbsent(prop.getRegistryUrl(), RegistryUtils::createAndStart);
+        registry = RegistryHolder.computeIfAbsent(getRegistryURL(), RegistryUtils::createAndStart);
     }
 
     public void shutdown() {
         if (start.compareAndSet(true, false)) {
             if (remotingServer != null) {
-                remotingServer.stop();
+                remotingServer.destroy();
+            }
+            if (registry != null) {
+                registry.shutdown();
             }
         }
     }

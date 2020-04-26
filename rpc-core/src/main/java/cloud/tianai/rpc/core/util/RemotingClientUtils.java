@@ -11,54 +11,38 @@ import cloud.tianai.rpc.core.holder.RpcClientHolder;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec;
 import org.apache.commons.lang3.StringUtils;
 
+import static cloud.tianai.rpc.common.constant.CommonConstant.*;
+
 /**
  * @Author: 天爱有情
  * @Date: 2020/02/09 19:33
  * @Description: 远程客户端的一些公共方法
  */
 public class RemotingClientUtils {
+    private static final RemotingDataProcessor REMOTING_DATA_PROCESSOR =
+            new RequestResponseRemotingDataProcessor(new SimpleHeartbeatRpcInvocation());
 
     /**
      * 获取远程客户端
      *
-     * @param rpcConfiguration RPC相关配
-     * @param url              URL地址
+     * @param url URL地址
      * @return 远程客户端实例
      */
-    public static RemotingClient getRpcClient(RpcClientConfiguration rpcConfiguration, URL url) {
+    public static RemotingClient getRpcClient(URL url) {
         return RpcClientHolder.computeIfAbsent(url.getProtocol(), url.getAddress(), (p, a) -> {
-            String host = url.getHost();
-            if (StringUtils.isBlank(host)) {
-                throw new RpcException("客户端启动失败，必须指定host");
+            String protocol = url.getProtocol();
+            if (RPC_PROXY_PROTOCOL.equals(protocol)) {
+                // 默认使用 netty
+                protocol = DEFAULT_REMOTING_PROTOCOL;
             }
-            Integer port = url.getPort();
-            int workThreads = rpcConfiguration.getWorkerThread();
-            String codecProtocol = rpcConfiguration.getOrDefault(rpcConfiguration.getCodec(), CommonConstant.DEFAULT_CODEC);
-
-            // 加载 codec
-            RemotingDataCodec codec = ExtensionLoader.getExtensionLoader(RemotingDataCodec.class).getExtension(codecProtocol);
-            Integer timeout = rpcConfiguration.getOrDefault(rpcConfiguration.getTimeout(), CommonConstant.DEFAULT_TIMEOUT);
-            RemotingConfiguration conf = new RemotingConfiguration();
-            conf.setHost(host);
-            conf.setPort(port);
-            conf.setWorkerThreads(workThreads);
-            conf.setCodec(codec);
-            conf.setConnectTimeout(timeout);
-            RemotingDataProcessor remotingDataProcessor = new RequestResponseRemotingDataProcessor(new SimpleHeartbeatRpcInvocation());
-            conf.setRemotingDataProcessor(remotingDataProcessor);
-            String client = rpcConfiguration.getProtocol();
-
             // 加载扩展
             ExtensionLoader<RemotingClient> extensionLoader = ExtensionLoader.getExtensionLoader(RemotingClient.class);
-            RemotingClient c = extensionLoader.createExtension(client, false);
+            RemotingClient c = extensionLoader.createExtension(protocol, false);
             // 启动客户端
             if (c != null) {
-                // 设置权重
-                c.setWeight(url.getParameter(CommonConstant.WEIGHT_KEY, CommonConstant.DEFAULT_WEIGHT));
-
-                c.start(conf);
+                c.start(url, REMOTING_DATA_PROCESSOR);
             } else {
-                throw new RpcRemotingException("无法创建对应的 远程客户端 ， client=" + client);
+                throw new RpcRemotingException("无法创建对应的 远程客户端 ， client=" + protocol);
             }
             return c;
         });

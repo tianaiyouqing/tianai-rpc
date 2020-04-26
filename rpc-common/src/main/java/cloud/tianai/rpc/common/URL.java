@@ -109,8 +109,10 @@ public final class URL implements Serializable {
         this(protocol, null, null, host, port, null, CollectionUtils.toStringMap(pairs));
     }
 
+
     public URL(String protocol, String host, int port, Map<String, String> parameters) {
         this(protocol, null, null, host, port, null, parameters);
+        Map<String, String> stringparameters = null;
     }
 
     public URL(String protocol, String host, int port, String path) {
@@ -445,6 +447,60 @@ public final class URL implements Serializable {
         return defaultValue;
     }
 
+    public URL addParameter(String key, boolean value) {
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, char value) {
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, byte value) {
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, short value) {
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, int value) {
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, long value) {
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, float value) {
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, double value) {
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, Enum<?> value) {
+        if (value == null) {
+            return this;
+        }
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, Number value) {
+        if (value == null) {
+            return this;
+        }
+        return addParameter(key, String.valueOf(value));
+    }
+
+    public URL addParameter(String key, CharSequence value) {
+        if (value == null || value.length() == 0) {
+            return this;
+        }
+        return addParameter(key, String.valueOf(value));
+    }
+
+
 
     public URL addParameter(String key, String value) {
         if (StringUtils.isEmpty(key)
@@ -459,5 +515,23 @@ public final class URL implements Serializable {
         Map<String, String> map = new HashMap<>(getParameters());
         map.put(key, value);
         return new URL(protocol, username, password, host, port, path, map);
+    }
+
+    public URL addParameterIfAbsent(String key, String value) {
+        if (StringUtils.isEmpty(key)
+                || StringUtils.isEmpty(value)) {
+            return this;
+        }
+        if (hasParameter(key)) {
+            return this;
+        }
+        Map<String, String> map = new HashMap<>(getParameters());
+        map.put(key, value);
+
+        return new URL(protocol, username, password, host, port, path, map);
+    }
+    public boolean hasParameter(String key) {
+        String value = getParameter(key);
+        return value != null && value.length() > 0;
     }
 }

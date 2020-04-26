@@ -175,8 +175,7 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
     }
 
     protected RemotingClient createRpcClientIfNecessary(URL url) {
-        RpcClientConfiguration rpcConfiguration = getConfig();
-        return RemotingClientUtils.getRpcClient(rpcConfiguration, url);
+        return RemotingClientUtils.getRpcClient(url);
     }
 
     /**

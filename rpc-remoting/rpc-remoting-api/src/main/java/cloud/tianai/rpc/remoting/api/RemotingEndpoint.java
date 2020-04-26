@@ -1,5 +1,7 @@
 package cloud.tianai.rpc.remoting.api;
 
+import cloud.tianai.rpc.common.Node;
+import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
 
 /**
@@ -7,14 +9,14 @@ import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
  * @Date: 2020/04/12 22:09
  * @Description: 远程 端点相关信息
  */
-public interface RemotingEndpoint {
+public interface RemotingEndpoint extends Node {
     /**
      * 启动远程
      * @param config 配置消息
      * @return channel持有者
      * @throws RpcRemotingException 启动失败会抛异常
      */
-    RemotingChannelHolder start(RemotingConfiguration config) throws RpcRemotingException;
+    RemotingChannelHolder start(URL config, RemotingDataProcessor remotingDataProcessor) throws RpcRemotingException;
 
     /**
      * 是否打开状态
@@ -22,11 +24,6 @@ public interface RemotingEndpoint {
      */
     boolean isOpen();
 
-    /**
-     * 是否处于活跃状态，并已经连接
-     * @return
-     */
-    boolean isActive();
     /**
      * 获取唯一ID
      * @return
@@ -37,11 +34,6 @@ public interface RemotingEndpoint {
      * @return
      */
     RemotingChannelHolder getChannel();
-
-    /**
-     * 停止
-     */
-    void stop();
 
     /**
      * 是否启动

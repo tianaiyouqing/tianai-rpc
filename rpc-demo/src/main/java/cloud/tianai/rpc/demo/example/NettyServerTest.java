@@ -1,12 +1,10 @@
 package cloud.tianai.rpc.demo.example;
 
-import cloud.tianai.remoting.api.*;
-import cloud.tianai.remoting.codec.hessian2.Hessian2Decoder;
-import cloud.tianai.remoting.codec.hessian2.Hessian2Encoder;
-import cloud.tianai.remoting.netty.NettyServer;
+import cloud.tianai.rpc.remoting.codec.hessian2.Hessian2Codec;
+import cloud.tianai.rpc.remoting.netty.NettyServer;
+import cloud.tianai.rpc.remoting.api.*;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class NettyServerTest {
 
@@ -21,8 +19,7 @@ public class NettyServerTest {
         config.setHost("127.0.0.1");
         config.setPort(20881);
         config.setWorkerThreads(16);
-        config.setEncoder(new Hessian2Encoder());
-        config.setDecoder(new Hessian2Decoder());
+        config.setCodec(new Hessian2Codec());
         config.setRemotingDataProcessor(new DemoRemotingDataProcessor());
         config.setIdleTimeout(60000);
         config.setBossThreads(1);
@@ -38,7 +35,7 @@ public class NettyServerTest {
     private static class DemoRemotingDataProcessor  implements RemotingDataProcessor {
 
         @Override
-        public void readMessage(cloud.tianai.remoting.api.Channel channel, Object msg, Object extend) {
+        public void readMessage(Channel channel, Object msg, Object extend) {
             Request request = (Request) msg;
             System.out.println("Server端收到消息:" + msg);
             Response response = new Response(request.getId(), "v1");
@@ -47,7 +44,7 @@ public class NettyServerTest {
         }
 
         @Override
-        public Object writeMessage(cloud.tianai.remoting.api.Channel channel, Object msg, Object extend) {
+        public Object writeMessage(Channel channel, Object msg, Object extend) {
             return null;
         }
         @Override

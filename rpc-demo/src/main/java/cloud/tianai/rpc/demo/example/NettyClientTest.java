@@ -1,10 +1,8 @@
 package cloud.tianai.rpc.demo.example;
 
-import cloud.tianai.remoting.api.*;
-import cloud.tianai.remoting.codec.hessian2.Hessian2Decoder;
-import cloud.tianai.remoting.codec.hessian2.Hessian2Encoder;
-import cloud.tianai.remoting.api.DefaultFuture;
-import cloud.tianai.remoting.netty.NettyClient;
+import cloud.tianai.rpc.remoting.codec.hessian2.Hessian2Codec;
+import cloud.tianai.rpc.remoting.api.*;
+import cloud.tianai.rpc.remoting.netty.NettyClient;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -20,8 +18,7 @@ public class NettyClientTest {
         config.setHost("127.0.0.1");
         config.setPort(20881);
         config.setWorkerThreads(16);
-        config.setEncoder(new Hessian2Encoder());
-        config.setDecoder(new Hessian2Decoder());
+        config.setCodec(new Hessian2Codec());
         config.setRemotingDataProcessor(new DemoRemotingDataProcessor());
         config.setConnectTimeout(3000);
         RemotingChannelHolder channelHolder = nettyClient.start(config);
@@ -37,7 +34,7 @@ public class NettyClientTest {
     private static class DemoRemotingDataProcessor   implements RemotingDataProcessor {
 
         @Override
-        public void readMessage(cloud.tianai.remoting.api.Channel channel, Object msg, Object extend) {
+        public void readMessage(Channel channel, Object msg, Object extend) {
             DefaultFuture.received(channel, (Response) msg, true);
         }
 

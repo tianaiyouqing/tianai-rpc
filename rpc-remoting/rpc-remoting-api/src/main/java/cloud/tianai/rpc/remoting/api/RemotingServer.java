@@ -10,9 +10,4 @@ import cloud.tianai.rpc.common.extension.SPI;
 @SPI
 public interface RemotingServer extends RemotingEndpoint{
 
-    /**
-     * 远程配置
-     * @return
-     */
-    RemotingServerConfiguration getRemotingServerConfiguration();
 }

@@ -18,7 +18,7 @@ public class RemotingConfiguration {
     /** 端口. */
     private Integer port = 20880;
     /** 工作线程数. */
-    private Integer workerThreads = Math.min(Runtime.getRuntime().availableProcessors() + 1, 32);;
+    private Integer workerThreads = Math.min(Runtime.getRuntime().availableProcessors() + 1, 32);
     /** 编码解码器. */
     private RemotingDataCodec codec;
     /** 远程数据解析. */
@@ -29,6 +29,4 @@ public class RemotingConfiguration {
     private ExecutorService threadPool;;
     /** 心跳超时. */
     private Integer idleTimeout = 600000;
-
-
 }

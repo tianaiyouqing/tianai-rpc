@@ -1,9 +1,9 @@
 package cloud.tianai.rpc.demo.api;
 
-import cloud.tianai.remoting.api.*;
-import cloud.tianai.remoting.api.util.ResponseUtils;
-import cloud.tianai.remoting.codec.hessian2.Hessian2Decoder;
-import cloud.tianai.remoting.codec.hessian2.Hessian2Encoder;
+import cloud.tianai.rpc.remoting.api.*;
+import cloud.tianai.rpc.remoting.api.util.ResponseUtils;
+import cloud.tianai.rpc.remoting.codec.hessian2.Hessian2Codec;
+import cloud.tianai.rpc.remoting.netty.NettyServer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,13 +17,12 @@ public class NettyServerTest {
     public static CountDownLatch countDownLatch = new CountDownLatch(1);
 
     public static void main(String[] args) throws InterruptedException {
-        cloud.tianai.remoting.netty.NettyServer nettyServer = new cloud.tianai.remoting.netty.NettyServer();
+        NettyServer nettyServer = new NettyServer();
         RemotingServerConfiguration config = new RemotingServerConfiguration();
         config.setHost("127.0.0.1");
         config.setPort(20881);
         config.setWorkerThreads(16);
-        config.setEncoder(new Hessian2Encoder());
-        config.setDecoder(new Hessian2Decoder());
+        config.setCodec(new Hessian2Codec());
         RpcInvocation rpcInvocation = new TestRpcInvocation();
         config.setRemotingDataProcessor(new RequestResponseRemotingDataProcessor(rpcInvocation));
         config.setIdleTimeout(60000);

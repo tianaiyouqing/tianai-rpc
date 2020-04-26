@@ -1,10 +1,9 @@
 package cloud.tianai.rpc.remoting.netty;
 
+import cloud.tianai.rpc.common.util.ThreadUtils;
 import cloud.tianai.rpc.remoting.api.AbstractRemotingClient;
 import cloud.tianai.rpc.remoting.api.RemotingChannelHolder;
-import cloud.tianai.rpc.remoting.api.RemotingConfiguration;
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
-import cloud.tianai.rpc.common.util.ThreadUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -36,71 +35,69 @@ public class NettyClient extends AbstractRemotingClient {
     private EventLoopGroup workerGroup;
     private NettyRemotingChannelHolder channelHolder;
     private Bootstrap bootstrap;
-    private RemotingConfiguration config;
 
     @Override
-    public RemotingChannelHolder doStart(RemotingConfiguration config) throws RpcRemotingException {
+    public RemotingChannelHolder doStart() throws RpcRemotingException {
         bootstrap = new Bootstrap();
-        this.config = config;
         // 初始化eventLoopGroup
-        initEventLoopGroup(config);
+        initEventLoopGroup();
         // 包装bootstrap
-        warpBootStrap(bootstrap, config);
+        warpBootStrap(bootstrap);
 
         // 链接
-        this.channel = connect(bootstrap, config);
+        this.channel = connect(bootstrap);
 
         channelHolder = NettyRemotingChannelHolder.create(this.channel);
         return channelHolder;
     }
 
-    private Channel connect(Bootstrap bs, RemotingConfiguration config) {
-        ChannelFuture channelFuture = bs.connect(new InetSocketAddress(config.getHost(), config.getPort()));
-        boolean ret = channelFuture.awaitUninterruptibly(config.getConnectTimeout(), MILLISECONDS);
+    private Channel connect(Bootstrap bs) {
+        ChannelFuture channelFuture = bs.connect(new InetSocketAddress(getUrl().getHost(), getUrl().getPort()));
+        boolean ret = channelFuture.awaitUninterruptibly(getConnectTimeout(), MILLISECONDS);
         if (ret && channelFuture.isSuccess()) {
             channel = channelFuture.channel();
             return channel;
         }
         throw new RpcRemotingException("client链接超时," +
-                " host=[" + config.getHost() + "]," +
-                " port=[" + config.getPort() + "]," +
-                " 超时时间:" + config.getConnectTimeout() + MILLISECONDS.toString()
+                " host=[" + getUrl().getHost() + "]," +
+                " port=[" + getUrl().getPort() + "]," +
+                " 超时时间:" + getConnectTimeout() + MILLISECONDS.toString()
         );
     }
 
-    private void warpBootStrap(Bootstrap bs, RemotingConfiguration config) {
+    private void warpBootStrap(Bootstrap bs) {
         bs.channel(Epoll.isAvailable() ? EpollSocketChannel.class : NioSocketChannel.class)
                 .group(workerGroup)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.max(3000, config.getConnectTimeout()))
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.max(3000, getConnectTimeout()))
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast("Encoder", new NettyEncoder(config.getCodec(), config.getRemotingDataProcessor()));
-                        pipeline.addLast("Decoder", new NettyDecoder(config.getCodec()));
+                        pipeline.addLast("Encoder", new NettyEncoder(getRemotingDataCodec(), getRemotingDataProcessor()));
+                        pipeline.addLast("Decoder", new NettyDecoder(getRemotingDataCodec()));
                         // client 处理只读心跳
                         pipeline.addLast("client-idle-handler",
-                                new IdleStateHandler(config.getIdleTimeout(), 0, 0, MILLISECONDS));
-                        pipeline.addLast("handler", new NettyClientHandler(config.getRemotingDataProcessor()));
+                                new IdleStateHandler(getIdleTimeout(), 0, 0, MILLISECONDS));
+                        pipeline.addLast("handler", new NettyClientHandler(getRemotingDataProcessor()));
                     }
                 });
     }
 
-    private void initEventLoopGroup(RemotingConfiguration config) {
+    private void initEventLoopGroup() {
         if (workerGroup == null) {
             if (Epoll.isAvailable()) {
-                workerGroup = new EpollEventLoopGroup(config.getWorkerThreads());
+                workerGroup = new EpollEventLoopGroup(getWorkerThreads());
             } else {
-                workerGroup = new NioEventLoopGroup(config.getWorkerThreads());
+                workerGroup = new NioEventLoopGroup(getWorkerThreads());
             }
         }
     }
 
     @Override
-    public void doStop() throws RpcRemotingException {
+    public void doDestroy() throws RpcRemotingException {
         if (workerGroup != null) {
             workerGroup.shutdownGracefully();
         }
@@ -135,7 +132,7 @@ public class NettyClient extends AbstractRemotingClient {
         }
 
         // 连接channel
-        Channel channel = connect(this.bootstrap, config);
+        Channel channel = connect(this.bootstrap);
         log.info("连接channel:" + channel.remoteAddress());
         this.channelHolder.setChannel(channel);
     }

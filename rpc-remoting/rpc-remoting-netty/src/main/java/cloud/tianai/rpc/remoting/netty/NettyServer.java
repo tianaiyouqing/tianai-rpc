@@ -1,10 +1,10 @@
 package cloud.tianai.rpc.remoting.netty;
 
+import cloud.tianai.rpc.common.threadpool.NamedThreadFactory;
 import cloud.tianai.rpc.remoting.api.AbstractRemotingServer;
 import cloud.tianai.rpc.remoting.api.RemotingChannelHolder;
 import cloud.tianai.rpc.remoting.api.RemotingServerConfiguration;
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
-import cloud.tianai.rpc.common.threadpool.NamedThreadFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -41,26 +41,27 @@ public class NettyServer extends AbstractRemotingServer {
     private Channel channel;
     private InetSocketAddress address;
     private NettyRemotingChannelHolder channelHolder;
-    private RemotingServerConfiguration remotingServerConfiguration;
-    /** 线程池. */
+    /**
+     * 线程池.
+     */
     ExecutorService threadPool;
 
     @Override
-    public RemotingChannelHolder doStart(RemotingServerConfiguration config) throws RpcRemotingException {
+    public RemotingChannelHolder doStart() throws RpcRemotingException {
 
         ServerBootstrap serverBootstrap = new ServerBootstrap();
 
         // 创建工作线程池，如果有必要
-        initThreadLocal(config);
+        initThreadLocal();
 
         // 创建eventLoopGroup
-        initEventLoopGroup(config);
+        initEventLoopGroup();
 
         // 包装bootstrap
-        warpBootStrap(serverBootstrap, config);
+        warpBootStrap(serverBootstrap);
 
         // 绑定端口
-        ChannelFuture channelFuture = bind(serverBootstrap, config);
+        ChannelFuture channelFuture = bind(serverBootstrap);
 
         channelFuture.syncUninterruptibly();
         if (channelFuture.isSuccess()) {
@@ -72,35 +73,28 @@ public class NettyServer extends AbstractRemotingServer {
         }
         channel = channelFuture.channel();
         channelHolder = NettyRemotingChannelHolder.create(channel);
-        this.remotingServerConfiguration = config;
         return channelHolder;
     }
 
-    private void initThreadLocal(RemotingServerConfiguration config) {
-        if (config.getThreadPool() != null) {
-            this.threadPool = config.getThreadPool();
-        } else {
-            // 创建默认线程池
-            this.threadPool = new ThreadPoolExecutor(200,
-                    200,
-                    0,
-                    TimeUnit.MILLISECONDS,
-                    new LinkedBlockingQueue<Runnable>(1024),
-                    new NamedThreadFactory("tianai-rpc-svc", false),
-                    new ThreadPoolExecutor.AbortPolicy());
-        }
+    private void initThreadLocal() {
+        // 创建默认线程池
+        this.threadPool = new ThreadPoolExecutor(200,
+                200,
+                0,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(1024),
+                new NamedThreadFactory("tianai-rpc-svc", false),
+                new ThreadPoolExecutor.AbortPolicy());
     }
 
 
-    private ChannelFuture bind(ServerBootstrap serverBootstrap, RemotingServerConfiguration config) {
-        String host = config.getHost();
-        Integer port;
-        if (config.getPort() == null || config.getPort() < 1) {
+    private ChannelFuture bind(ServerBootstrap serverBootstrap) {
+        String host = getUrl().getHost();
+        Integer port = getUrl().getPort();
+        if (port < 1) {
             port = DEFAULT_PORT;
-        } else {
-            port = config.getPort();
         }
-        if (StringUtils.isBlank(config.getHost())) {
+        if (StringUtils.isBlank(host)) {
             address = new InetSocketAddress(port);
         } else {
             address = new InetSocketAddress(host, port);
@@ -108,7 +102,7 @@ public class NettyServer extends AbstractRemotingServer {
         return serverBootstrap.bind(address);
     }
 
-    private void warpBootStrap(ServerBootstrap serverBootstrap, RemotingServerConfiguration config) {
+    private void warpBootStrap(ServerBootstrap serverBootstrap) {
         serverBootstrap.group(bossGroup, workerGroup)
                 .channel(Epoll.isAvailable() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
                 .childOption(ChannelOption.TCP_NODELAY, Boolean.TRUE)
@@ -118,33 +112,33 @@ public class NettyServer extends AbstractRemotingServer {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast("Encoder", new NettyEncoder(config.getCodec(),  config.getRemotingDataProcessor()));
-                        pipeline.addLast("Decoder", new NettyDecoder(config.getCodec()));
+                        pipeline.addLast("Encoder", new NettyEncoder(getRemotingDataCodec(), getRemotingDataProcessor()));
+                        pipeline.addLast("Decoder", new NettyDecoder(getRemotingDataCodec()));
                         pipeline.addLast("server-idle-handler",
-                                new IdleStateHandler(0, 0, config.getServerIdleTimeout(), MILLISECONDS));
-                        pipeline.addLast("handler", new NettyServerHandler(threadPool, config.getRemotingDataProcessor()));
+                                new IdleStateHandler(0, 0, getServerIdleTimeout(), MILLISECONDS));
+                        pipeline.addLast("handler", new NettyServerHandler(threadPool, getRemotingDataProcessor()));
                     }
                 });
     }
 
-    private void initEventLoopGroup(RemotingServerConfiguration config) {
+    private void initEventLoopGroup() {
         if (bossGroup != null && workerGroup != null) {
             return;
         }
         // 创建 eventLoopGroup
         if (Epoll.isAvailable()) {
             // epoll
-            bossGroup = new EpollEventLoopGroup(config.getBossThreads());
-            workerGroup = new EpollEventLoopGroup(config.getWorkerThreads());
+            bossGroup = new EpollEventLoopGroup(getBossThreads());
+            workerGroup = new EpollEventLoopGroup(getWorkerThreads());
         } else {
-            bossGroup = new NioEventLoopGroup(config.getBossThreads());
-            workerGroup = new NioEventLoopGroup(config.getWorkerThreads());
+            bossGroup = new NioEventLoopGroup(getBossThreads());
+            workerGroup = new NioEventLoopGroup(getWorkerThreads());
         }
 
     }
 
     @Override
-    public void doStop() throws RpcRemotingException {
+    public void doDestroy() throws RpcRemotingException {
         if (bossGroup != null) {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
@@ -169,10 +163,5 @@ public class NettyServer extends AbstractRemotingServer {
     @Override
     public String getRemotingType() {
         return SERVER_TYPE;
-    }
-
-    @Override
-    public RemotingServerConfiguration getRemotingServerConfiguration() {
-        return remotingServerConfiguration;
     }
 }

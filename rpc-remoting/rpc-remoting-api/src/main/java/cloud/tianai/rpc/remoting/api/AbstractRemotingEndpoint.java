@@ -1,11 +1,23 @@
 package cloud.tianai.rpc.remoting.api;
 
+import cloud.tianai.rpc.common.URL;
+import cloud.tianai.rpc.common.constant.CommonConstant;
+import cloud.tianai.rpc.common.extension.ExtensionLoader;
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
 import cloud.tianai.rpc.common.util.id.IdUtils;
+import cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static cloud.tianai.rpc.common.constant.CommonConstant.*;
+
+/**
+ * @Author: 天爱有情
+ * @Date: 2020/04/25 23:00
+ * @Description: 抽象的 远程 端点相关信息
+ */
 @Slf4j
 public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
     /**
@@ -13,12 +25,51 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
      */
     private AtomicBoolean start = new AtomicBoolean(false);
 
+    /**
+     * 唯一的ID标识
+     */
     private String id;
 
     /**
-     * 默认重量都是100
+     * 当前的URL
      */
-    private int weight = 100;
+    @Getter
+    private URL url;
+
+    /**
+     * 远程数据解析器
+     */
+    @Getter
+    private RemotingDataProcessor remotingDataProcessor;
+
+    /**
+     * 工作线程数
+     */
+    @Getter
+    private int workerThreads;
+
+    /**
+     * 心跳超时
+     */
+    @Getter
+    private int idleTimeout;
+
+    /**
+     * 编解码器
+     */
+    @Getter
+    private RemotingDataCodec remotingDataCodec;
+
+    /**
+     * 默认权重都是100
+     */
+    private int weight = DEFAULT_WEIGHT;
+
+
+    @Override
+    public URL getUrl() {
+        return url;
+    }
 
     @Override
     public String getId() {
@@ -26,13 +77,24 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
     }
 
     @Override
-    public RemotingChannelHolder start(RemotingConfiguration config) throws RpcRemotingException {
+    public RemotingChannelHolder start(URL config, RemotingDataProcessor remotingDataProcessor) throws RpcRemotingException {
         if (!start.compareAndSet(false, true)) {
             throw new RpcRemotingException("无需重复启动");
         }
         this.id = IdUtils.getNoRepetitionIdStr();
+        this.url = config;
+        this.remotingDataProcessor = remotingDataProcessor;
+        this.workerThreads = getUrl().getParameter(RPC_WORKER_THREADS_KEY, DEFAULT_IO_THREADS);
+        this.idleTimeout = getUrl().getParameter(RPC_IDLE_TIMEOUT_KEY, DEFAULT_RPC_IDLE_TIMEOUT);
+        // 设置权重
+        setWeight(getUrl().getParameter(CommonConstant.WEIGHT_KEY, CommonConstant.DEFAULT_WEIGHT));
+        String codecProtocol = getUrl().getParameter(CODEC_KEY, DEFAULT_CODEC);
+        // 加载 codec
+        remotingDataCodec = ExtensionLoader.getExtensionLoader(RemotingDataCodec.class).getExtension(codecProtocol);
+        prepareStart();
+
         try {
-            RemotingChannelHolder channelHolder = doStart(config);
+            RemotingChannelHolder channelHolder = doStart();
             return channelHolder;
         } catch (RpcRemotingException e) {
             start.set(false);
@@ -43,12 +105,16 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
         }
     }
 
+    /**
+     * 启动前 模板方法， 子类扩展
+     */
+    protected abstract void prepareStart();
 
     @Override
-    public void stop() {
+    public void destroy() {
         if (start.compareAndSet(true, false)) {
             try {
-                doStop();
+                doDestroy();
             } catch (Throwable e) {
                 log.warn("停止server失败 , 类型[{}], e: [{}]", getRemotingType(), e);
             }
@@ -73,15 +139,16 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
 
     /**
      * 子类实现， 具体的start方法
-     * @param config 启动配置
+     *
      * @return RemotingChannelHolder
      * @throws RpcRemotingException 启动失败抛出异常
      */
-    protected abstract RemotingChannelHolder doStart(RemotingConfiguration config) throws RpcRemotingException;
+    protected abstract RemotingChannelHolder doStart() throws RpcRemotingException;
 
     /**
-     * 停止服务
+     * 销毁服务
+     *
      * @throws RpcRemotingException 可能会抛出异常
      */
-    protected abstract void doStop() throws RpcRemotingException;
+    protected abstract void doDestroy() throws RpcRemotingException;
 }

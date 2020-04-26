@@ -65,6 +65,13 @@ public class IPUtils {
         return address == null ? null : address.getHostAddress();
     }
 
+    public static String filterLocalHost(String host) {
+        if (StringUtils.isBlank(host)) {
+            return host;
+        }
+
+        return host;
+    }
     public static InetAddress getHostAddress() {
         InetAddress localAddress = null;
         try {

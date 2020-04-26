@@ -188,7 +188,14 @@ public class CollectionUtils {
         }
         return parameters;
     }
-
+    public static Map<String, String> toStringValueMap(Map<String, Object> params) {
+        if (params == null || params.size() < 1) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> parameters = new HashMap<>(params.size());
+        params.forEach((k,v) -> parameters.put(k, String.valueOf(v)));
+        return parameters;
+    }
     @SuppressWarnings("unchecked")
     public static <K, V> Map<K, V> toMap(Object... pairs) {
         Map<K, V> ret = new HashMap<>();

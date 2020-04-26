@@ -11,8 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 
-import static cloud.tianai.rpc.common.constant.CommonConstant.DEFAULT_REQUEST_RETRY;
-import static cloud.tianai.rpc.common.constant.CommonConstant.DEFAULT_REQUEST_TIMEOUT;
+import static cloud.tianai.rpc.common.constant.CommonConstant.*;
 
 /**
  * @Author: 天爱有情
@@ -64,7 +63,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T> {
         this.interfaceClass = interfaceClass;
         this.requestTimeout = conf.getOrDefault(conf.getRequestTimeout(), DEFAULT_REQUEST_TIMEOUT);
         this.retry = conf.getOrDefault(conf.getRetry(), DEFAULT_REQUEST_RETRY);
-        this.url = new URL("tianai-rpc", IPUtils.getHostIp(), 0, interfaceClass.getName());
+        this.url = new URL(RPC_PROXY_PROTOCOL, IPUtils.getHostIp(), 0, interfaceClass.getName());
         // 构建RpcClient模板
         rpcClientTemplate = createRpcClientTemplate(conf, conf.isLazyLoadRegistry(), conf.isLazyStartRpcClient());
         return doCreateProxy();
@@ -72,7 +71,7 @@ public abstract class AbstractRpcProxy<T> implements RpcProxy<T> {
     }
 
     private RpcClientTemplate createRpcClientTemplate(RpcClientConfiguration conf, boolean lazyLoadRegistry, boolean lazyStartRpcClient) {
-        return new DefaultRpcClientTemplate(rpcConfiguration, url, lazyLoadRegistry, lazyStartRpcClient, true);
+        return new DefaultRpcClientTemplate(conf, url, lazyLoadRegistry, lazyStartRpcClient, true);
     }
 
     /**

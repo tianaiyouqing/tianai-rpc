@@ -1,6 +1,7 @@
 package cloud.tianai.rpc.core.configuration;
 
 
+import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.configuration.RpcConfiguration;
 import cloud.tianai.rpc.common.sort.OrderComparator;
 import cloud.tianai.rpc.core.context.RpcContextClientPostProcessor;
@@ -17,7 +18,7 @@ import java.util.List;
  * @Description: RPC客户端相关配置
  */
 @Data
-public class RpcClientConfiguration extends RpcConfiguration {
+public class RpcClientConfiguration {
 
     private static final List<RpcClientPostProcessor> RPC_CLIENT_POST_PROCESSORS = new LinkedList<>();
 
@@ -26,6 +27,12 @@ public class RpcClientConfiguration extends RpcConfiguration {
     private Integer requestTimeout = 3000;
 
     private Integer retry = 3;
+
+    /** 服务注册地址. */
+    private URL registryUrl;
+
+    /** 超时. */
+    private Integer timeout = 5000;
 
     private boolean lazyLoadRegistry = true;
     private boolean lazyStartRpcClient = true;
@@ -73,5 +80,12 @@ public class RpcClientConfiguration extends RpcConfiguration {
     static {
         // 添加一些默认解析器
         addCommonRpcClientPostProcessor(new RpcContextClientPostProcessor());
+    }
+
+    public <T> T getOrDefault(T val, T defVal) {
+        if (val == null) {
+            return defVal;
+        }
+        return val;
     }
 }
