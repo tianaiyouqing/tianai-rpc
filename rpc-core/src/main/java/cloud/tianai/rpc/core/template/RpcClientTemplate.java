@@ -1,5 +1,6 @@
 package cloud.tianai.rpc.core.template;
 
+import cloud.tianai.rpc.common.lock.RpcLock;
 import cloud.tianai.rpc.remoting.api.RemotingClient;
 import cloud.tianai.rpc.remoting.api.Request;
 import cloud.tianai.rpc.remoting.api.Response;
@@ -76,7 +77,7 @@ public interface RpcClientTemplate {
      *
      * @return
      */
-    Object getClientLock();
+    RpcLock getClientLock();
 
     /**
      * 获取URL

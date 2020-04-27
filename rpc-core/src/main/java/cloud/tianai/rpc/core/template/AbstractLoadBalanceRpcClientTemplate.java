@@ -27,9 +27,7 @@ public abstract class AbstractLoadBalanceRpcClientTemplate extends AbstractRegis
     @Override
     public LoadBalance getLoadBalance() {
         if (loadBalance == null) {
-            synchronized (getClientLock()) {
-                initLoadBalance();
-            }
+            initLoadBalance();
         }
         return loadBalance;
     }

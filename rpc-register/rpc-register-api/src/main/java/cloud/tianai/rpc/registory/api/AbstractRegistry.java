@@ -40,6 +40,11 @@ public abstract class AbstractRegistry implements Registry {
         return Result.ofSuccess("register success");
     }
 
+    @Override
+    public URL getUrl() {
+        return registryUrl;
+    }
+
     protected void doRegister(URL url, boolean cache) {
         innerRegister(url);
         if (cache) {
@@ -78,7 +83,7 @@ public abstract class AbstractRegistry implements Registry {
                 doStart(url);
             } catch (TimeoutException e) {
                 // 启动失败, 执行shutdown
-                shutdown();
+                destroy();
                 throw new RpcRegistryException(e.getMessage(), e);
             }
         } else {
@@ -89,9 +94,9 @@ public abstract class AbstractRegistry implements Registry {
 
 
     @Override
-    public void shutdown() {
+    public void destroy() {
         if (start.compareAndSet(true, false)) {
-            doShutdown();
+            doDestroy();
             registryUrlMap.clear();
             statusListenerSet.clear();
         }
@@ -100,7 +105,7 @@ public abstract class AbstractRegistry implements Registry {
     /**
      * 停止
      */
-    protected abstract void doShutdown();
+    protected abstract void doDestroy();
 
     /**
      * 子类实现，具体的start方法

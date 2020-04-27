@@ -39,7 +39,7 @@ public class RegistryHolder {
     public static void remove(String key) {
         Registry registry = registryCache.remove(key);
         if (registry != null) {
-            registry.shutdown();
+            registry.destroy();
         }
     }
 
@@ -47,7 +47,7 @@ public class RegistryHolder {
         String key = getKey(url);
         Registry registry = registryCache.remove(key);
         if (registry != null) {
-            registry.shutdown();
+            registry.destroy();
         }
     }
 

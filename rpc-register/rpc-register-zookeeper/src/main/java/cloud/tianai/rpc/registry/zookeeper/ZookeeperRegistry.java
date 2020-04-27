@@ -56,10 +56,8 @@ public class ZookeeperRegistry extends AbstractRegistry {
     private String root;
 
     @Override
-    protected void doShutdown() {
-        if (zkClient != null) {
-            zkClient.close();
-        }
+    protected void doDestroy() {
+        zkClientClose();
         notifyListenerZkDataListenerMap.clear();
     }
 
@@ -177,7 +175,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
         }
     }
 
-    public void destroy() {
+    public void zkClientClose() {
         if (zkClient != null) {
             try {
                 zkClient.close();
@@ -232,6 +230,19 @@ public class ZookeeperRegistry extends AbstractRegistry {
 
     }
 
+    @Override
+    public boolean isActive() {
+        if (zkClient != null) {
+            try {
+                // 如果连接正常，说明活跃
+                return zkClient.exists(DEFAULT_ROOT);
+            } catch (Exception e) {
+                // 不做处理
+            }
+        }
+        return false;
+    }
+
     private class WatcherListener implements IZkStateListener {
 
         private Set<StatusListener> statusListenerSet;
@@ -269,7 +280,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
 
         private void reConnected() {
             try {
-                ZookeeperRegistry.this.destroy();
+                ZookeeperRegistry.this.zkClientClose();
                 try {
                     //wait for the zk server start success!
                     Thread.sleep(2000);

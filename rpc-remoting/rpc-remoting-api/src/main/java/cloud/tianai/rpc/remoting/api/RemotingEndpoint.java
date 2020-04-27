@@ -4,6 +4,8 @@ import cloud.tianai.rpc.common.Node;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
 
+import java.util.Map;
+
 /**
  * @Author: 天爱有情
  * @Date: 2020/04/12 22:09
@@ -16,7 +18,7 @@ public interface RemotingEndpoint extends Node {
      * @return channel持有者
      * @throws RpcRemotingException 启动失败会抛异常
      */
-    RemotingChannelHolder start(URL config, RemotingDataProcessor remotingDataProcessor) throws RpcRemotingException;
+    RemotingChannelHolder start(URL config, RemotingDataProcessor remotingDataProcessor, Map<String, String> parameters) throws RpcRemotingException;
 
     /**
      * 是否打开状态

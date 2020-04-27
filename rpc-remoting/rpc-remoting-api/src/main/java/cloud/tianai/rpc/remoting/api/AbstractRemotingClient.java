@@ -19,6 +19,6 @@ public abstract class AbstractRemotingClient extends AbstractRemotingEndpoint im
     @Override
     protected void prepareStart() {
         // 连接超时
-        this.connectTimeout = getUrl().getParameter(RPC_CONNECT_TIMEOUT_KEY, DEFAULT_RPC_IDLE_TIMEOUT);
+        this.connectTimeout = getParametersWrapper().getParameter(RPC_CONNECT_TIMEOUT_KEY, DEFAULT_RPC_IDLE_TIMEOUT);
     }
 }

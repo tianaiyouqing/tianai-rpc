@@ -116,6 +116,8 @@ public class ServerBootstrap {
             throw new RpcException("该服务已经启动，请勿重复启动[host=" + getServerURL().getHost() + ", port=" + getServerURL().getPort() + "]");
         }
         setDefaultParamsIfAbsent(parameters);
+        // 设置权重
+        parameters.putIfAbsent(WEIGHT_KEY, DEFAULT_WEIGHT);
         // 设置参数
         serverURL.setParameters(CollectionUtils.toStringValueMap(parameters));
         // 启动远程server
@@ -132,7 +134,7 @@ public class ServerBootstrap {
 
     private void setDefaultParamsIfAbsent(Map<String, Object> param) {
         param.putIfAbsent(TIMEOUT_KEY, DEFAULT_TIMEOUT);
-        param.putIfAbsent(WEIGHT_KEY, DEFAULT_WEIGHT);
+
         param.putIfAbsent(CODEC_KEY, DEFAULT_CODEC);
         param.putIfAbsent(RPC_WORKER_THREADS_KEY, DEFAULT_IO_THREADS);
         param.putIfAbsent(RPC_BOSS_THREAD_KEY, DEFAULT_RPC_BOSS_THREAD);
@@ -159,11 +161,10 @@ public class ServerBootstrap {
         }else {
             parameters = new HashMap<>(8);
         }
-        // 设置默认参数
-        setDefaultParamsIfAbsent(parameters);
+        // 设置权重
+        parameters.putIfAbsent(WEIGHT_KEY, DEFAULT_WEIGHT);
         // 设置连接超时
         parameters.putIfAbsent(RPC_CONNECT_TIMEOUT_KEY, DEFAULT_RPC_IDLE_TIMEOUT);
-
         URL url = new URL(RPC_PROXY_PROTOCOL,
                 getServerURL().getHost(),
                 getServerURL().getPort(),
@@ -230,7 +231,7 @@ public class ServerBootstrap {
 
             // 配置解析器
             RemotingDataProcessor remotingDataProcessor =new RequestResponseRemotingDataProcessor(rpcInvocation);
-            r.start(getServerURL(), remotingDataProcessor);
+            r.start(getServerURL(), remotingDataProcessor, getServerURL().getParameters());
             return r;
         });
     }
@@ -265,7 +266,7 @@ public class ServerBootstrap {
                 remotingServer.destroy();
             }
             if (registry != null) {
-                registry.shutdown();
+                registry.destroy();
             }
         }
     }

@@ -115,7 +115,7 @@ public class NacosRegistry extends AbstractRegistry {
                         try {
                             connect(getRegistryUrl(), 0, getRetryCount());
                         } catch (ConnectException e) {
-                            shutdown();
+                            destroy();
                             throw new RpcException("TIANAI-RPC REGISTRY NACOS 重连失败. address:".concat(getRegistryUrl().getAddress()));
                         }
                         // 重连成功
@@ -220,7 +220,7 @@ public class NacosRegistry extends AbstractRegistry {
     }
 
     @Override
-    protected void doShutdown() {
+    protected void doDestroy() {
         if (scheduledExecutorService != null) {
             scheduledExecutorService.shutdown();
         }
@@ -237,7 +237,7 @@ public class NacosRegistry extends AbstractRegistry {
             // 开启状态监听线程
             startStatusListenerThreadIfNecessary();
         } catch (Exception e) {
-            shutdown();
+            destroy();
             // 连接失败，抛出异常
             throw new RpcRegistryException(e.getMessage(), e);
         }
@@ -263,6 +263,11 @@ public class NacosRegistry extends AbstractRegistry {
                 log.error(e.getErrMsg(), e);
             }
         }
+    }
+
+    @Override
+    public boolean isActive() {
+        return NACOS_UP_STATUS.equals(namingService.getServerStatus());
     }
 
     interface NamingServiceCallback {

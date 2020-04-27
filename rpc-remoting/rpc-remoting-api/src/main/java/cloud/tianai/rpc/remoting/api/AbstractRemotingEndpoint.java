@@ -3,12 +3,14 @@ package cloud.tianai.rpc.remoting.api;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.constant.CommonConstant;
 import cloud.tianai.rpc.common.extension.ExtensionLoader;
+import cloud.tianai.rpc.common.ParametersWrapper;
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
 import cloud.tianai.rpc.common.util.id.IdUtils;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static cloud.tianai.rpc.common.constant.CommonConstant.*;
@@ -65,6 +67,11 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
      */
     private int weight = DEFAULT_WEIGHT;
 
+    @Getter
+    private Map<String, String> parameters;
+
+    @Getter
+    private ParametersWrapper parametersWrapper;
 
     @Override
     public URL getUrl() {
@@ -77,18 +84,22 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
     }
 
     @Override
-    public RemotingChannelHolder start(URL config, RemotingDataProcessor remotingDataProcessor) throws RpcRemotingException {
+    public RemotingChannelHolder start(URL url,
+                                       RemotingDataProcessor remotingDataProcessor,
+                                       Map<String, String> parameters) throws RpcRemotingException {
         if (!start.compareAndSet(false, true)) {
             throw new RpcRemotingException("无需重复启动");
         }
+        this.parameters = parameters;
+        this.parametersWrapper = new ParametersWrapper(parameters);
         this.id = IdUtils.getNoRepetitionIdStr();
-        this.url = config;
+        this.url = url;
         this.remotingDataProcessor = remotingDataProcessor;
-        this.workerThreads = getUrl().getParameter(RPC_WORKER_THREADS_KEY, DEFAULT_IO_THREADS);
-        this.idleTimeout = getUrl().getParameter(RPC_IDLE_TIMEOUT_KEY, DEFAULT_RPC_IDLE_TIMEOUT);
+        this.workerThreads = parametersWrapper.getParameter(RPC_WORKER_THREADS_KEY, DEFAULT_IO_THREADS);
+        this.idleTimeout = parametersWrapper.getParameter(RPC_IDLE_TIMEOUT_KEY, DEFAULT_RPC_IDLE_TIMEOUT);
         // 设置权重
-        setWeight(getUrl().getParameter(CommonConstant.WEIGHT_KEY, CommonConstant.DEFAULT_WEIGHT));
-        String codecProtocol = getUrl().getParameter(CODEC_KEY, DEFAULT_CODEC);
+        setWeight(parametersWrapper.getParameter(CommonConstant.WEIGHT_KEY, CommonConstant.DEFAULT_WEIGHT));
+        String codecProtocol = parametersWrapper.getParameter(CODEC_KEY, DEFAULT_CODEC);
         // 加载 codec
         remotingDataCodec = ExtensionLoader.getExtensionLoader(RemotingDataCodec.class).getExtension(codecProtocol);
         prepareStart();

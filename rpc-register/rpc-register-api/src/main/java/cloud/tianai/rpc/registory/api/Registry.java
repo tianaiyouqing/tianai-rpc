@@ -1,5 +1,6 @@
 package cloud.tianai.rpc.registory.api;
 
+import cloud.tianai.rpc.common.Node;
 import cloud.tianai.rpc.common.Result;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.extension.SPI;
@@ -12,7 +13,7 @@ import java.util.List;
  * @Description: 注册器
  */
 @SPI
-public interface Registry {
+public interface Registry extends Node {
 
     /**
      * 注册一个地址
@@ -65,9 +66,4 @@ public interface Registry {
      * @return Registry
      */
     Registry start(URL url);
-
-    /**
-     * 关闭
-     */
-    void shutdown();
 }

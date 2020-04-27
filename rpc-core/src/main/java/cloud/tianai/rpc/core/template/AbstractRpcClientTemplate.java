@@ -1,5 +1,7 @@
 package cloud.tianai.rpc.core.template;
 
+import cloud.tianai.rpc.common.lock.RpcLock;
+import cloud.tianai.rpc.common.lock.RpcSpinLock;
 import cloud.tianai.rpc.remoting.api.RemotingClient;
 import cloud.tianai.rpc.remoting.api.Request;
 import cloud.tianai.rpc.remoting.api.Response;
@@ -26,7 +28,7 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
 
-    private final Object lock = new Object();
+    private final RpcLock lock = new RpcSpinLock();
 
     private final Set<RpcClientPostProcessor> rpcClientPostProcessors = new HashSet<>(8);
 
@@ -141,11 +143,14 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
      */
     private void reconnectIfNecessary(RemotingClient remotingClient, Integer connectRetry) throws TimeoutException {
         if (!remotingClient.isActive()) {
-            synchronized (getClientLock()) {
+            getClientLock().lock();
+            try {
                 if (!remotingClient.isActive()) {
                     // 重新连接
                     remotingClient.reconnect(connectRetry);
                 }
+            } finally {
+                getClientLock().unlock();
             }
         }
     }
@@ -162,7 +167,7 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
 
 
     @Override
-    public Object getClientLock() {
+    public RpcLock getClientLock() {
         return lock;
     }
 
@@ -175,7 +180,8 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
     }
 
     protected RemotingClient createRpcClientIfNecessary(URL url) {
-        return RemotingClientUtils.getRpcClient(url);
+        RpcClientConfiguration config = getConfig();
+        return RemotingClientUtils.getRpcClient(url, config);
     }
 
     /**

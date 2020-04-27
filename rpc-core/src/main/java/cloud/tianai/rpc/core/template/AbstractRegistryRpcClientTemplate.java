@@ -58,8 +58,11 @@ public abstract class AbstractRegistryRpcClientTemplate extends AbstractRpcClien
             Registry r1 = RegistryUtils.createAndStart(u);
             r1.subscribe(() -> {
                 // 重新拉取
-                synchronized (getClientLock()) {
+                getClientLock().lock();
+                try {
                     lookAndSubscribeUrl(getUrl());
+                } finally {
+                    getClientLock().unlock();
                 }
             });
             return r1;
@@ -68,10 +71,13 @@ public abstract class AbstractRegistryRpcClientTemplate extends AbstractRpcClien
 
     private List<URL> lookUpOfThrow() {
         if (CollectionUtils.isEmpty(subscribeUrls)) {
-            synchronized (getClientLock()) {
+            getClientLock().lock();
+            try {
                 if (CollectionUtils.isEmpty(subscribeUrls)) {
                     lookAndSubscribeUrl(getUrl());
                 }
+            } finally {
+                getClientLock().unlock();
             }
         }
         if (CollectionUtils.isEmpty(subscribeUrls)) {

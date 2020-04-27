@@ -8,6 +8,7 @@ import cloud.tianai.rpc.remoting.api.RemotingDataProcessor;
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
 
 import java.net.SocketAddress;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 public class RemotingClientTestImpl implements RemotingClient {
@@ -30,7 +31,7 @@ public class RemotingClientTestImpl implements RemotingClient {
 
 
     @Override
-    public RemotingChannelHolder start(URL config, RemotingDataProcessor remotingDataProcessor) throws RpcRemotingException {
+    public RemotingChannelHolder start(URL config, RemotingDataProcessor remotingDataProcessor, Map<String, String> params) throws RpcRemotingException {
         return null;
     }
 
