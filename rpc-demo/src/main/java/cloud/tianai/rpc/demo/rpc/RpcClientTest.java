@@ -38,10 +38,10 @@ public class RpcClientTest {
 //        });
         // 编码解码器
         RpcClientConfiguration prop = new RpcClientConfiguration();
-//        prop.setCodec("hessian2");
+        prop.setCodec("hessian2");
         prop.setTimeout(5000);
         prop.setRequestTimeout(3000);
-//        prop.setProtocol("netty");
+        prop.setProtocol("netty");
         prop.setLoadBalance("random");
         prop.addRpcClientPostProcessor(new RpcClientPostProcessor() {
             @Override
@@ -62,11 +62,11 @@ public class RpcClientTest {
         // 注册器
 
         // 远程 客户端
-        RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();
+//        RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();
         Demo2 proxy = RpcProxyFactory.create(Demo2.class, prop, RpcProxyType.JDK_PROXY);
         // 添加附加数据
         RpcContext.getRpcContext().setAttachment("AAA", 123);
-        proxy.helloRpc3();
+        System.out.println(proxy.helloRpc2());
 //        proxy.toString();
 
 //        for (int i1 = 0; i1 < 1000; i1++) {

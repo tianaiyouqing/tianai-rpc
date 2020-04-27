@@ -44,7 +44,7 @@ public class ServerBootstrap {
 
     @Getter
     @Setter
-    private List<RpcInvocationPostProcessor> postProcessors;
+    private List<RpcInvocationPostProcessor> postProcessors = new LinkedList<>();
 
     /**
      * 远程Server.
@@ -153,11 +153,18 @@ public class ServerBootstrap {
     }
 
     public ServerBootstrap register(Class<?> interfaceClazz, Object ref, Map<String, Object> parameters) {
+        if(parameters != null && parameters.size() > 0) {
+            // 转换成hashMap
+            parameters = new HashMap<>(parameters);
+        }else {
+            parameters = new HashMap<>(8);
+        }
+        // 设置默认参数
         setDefaultParamsIfAbsent(parameters);
         // 设置连接超时
         parameters.putIfAbsent(RPC_CONNECT_TIMEOUT_KEY, DEFAULT_RPC_IDLE_TIMEOUT);
 
-        URL url = new URL(remotingServer.getRemotingType(),
+        URL url = new URL(RPC_PROXY_PROTOCOL,
                 getServerURL().getHost(),
                 getServerURL().getPort(),
                 interfaceClazz.getName(),
@@ -261,5 +268,10 @@ public class ServerBootstrap {
                 registry.shutdown();
             }
         }
+    }
+
+    public void addRpcInvocationPostProcessor(RpcInvocationPostProcessor rpcInvocationPostProcessor) {
+        postProcessors.remove(rpcInvocationPostProcessor);
+        postProcessors.add(rpcInvocationPostProcessor);
     }
 }

@@ -17,20 +17,20 @@ public class NettyServerTest {
     public static CountDownLatch countDownLatch = new CountDownLatch(1);
 
     public static void main(String[] args) throws InterruptedException {
-        NettyServer nettyServer = new NettyServer();
-        RemotingServerConfiguration config = new RemotingServerConfiguration();
-        config.setHost("127.0.0.1");
-        config.setPort(20881);
-        config.setWorkerThreads(16);
-        config.setCodec(new Hessian2Codec());
-        RpcInvocation rpcInvocation = new TestRpcInvocation();
-        config.setRemotingDataProcessor(new RequestResponseRemotingDataProcessor(rpcInvocation));
-        config.setIdleTimeout(60000);
-        config.setBossThreads(1);
-        RemotingChannelHolder channelHolder = nettyServer.start(config);
-        System.out.println("nettyServer启动成功");
-        // 阻塞
-        countDownLatch.await();
+//        NettyServer nettyServer = new NettyServer();
+//        RemotingServerConfiguration config = new RemotingServerConfiguration();
+//        config.setHost("127.0.0.1");
+//        config.setPort(20881);
+//        config.setWorkerThreads(16);
+//        config.setCodec(new Hessian2Codec());
+//        RpcInvocation rpcInvocation = new TestRpcInvocation();
+//        config.setRemotingDataProcessor(new RequestResponseRemotingDataProcessor(rpcInvocation));
+//        config.setIdleTimeout(60000);
+//        config.setBossThreads(1);
+//        RemotingChannelHolder channelHolder = nettyServer.start(config);
+//        System.out.println("nettyServer启动成功");
+//        // 阻塞
+//        countDownLatch.await();
     }
 
     public static class TestRpcInvocation implements RpcInvocation {

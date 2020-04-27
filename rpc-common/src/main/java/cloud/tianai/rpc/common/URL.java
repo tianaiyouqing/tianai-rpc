@@ -450,6 +450,9 @@ public final class URL implements Serializable {
     public URL addParameter(String key, boolean value) {
         return addParameter(key, String.valueOf(value));
     }
+    public URL addParameter(String key, Object value) {
+        return addParameter(key, String.valueOf(value));
+    }
 
     public URL addParameter(String key, char value) {
         return addParameter(key, String.valueOf(value));

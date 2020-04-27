@@ -46,7 +46,7 @@ public class RpcClientHolder {
     public static void removeRpcClient(String key) {
         RemotingClient rpcClient = rpcClientMap.remove(key);
         if (rpcClient != null) {
-            rpcClient.stop();
+            rpcClient.destroy();
         }
     }
 

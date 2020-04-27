@@ -4,6 +4,7 @@ package cloud.tianai.rpc.core.configuration;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.configuration.RpcConfiguration;
 import cloud.tianai.rpc.common.sort.OrderComparator;
+import cloud.tianai.rpc.common.util.IPUtils;
 import cloud.tianai.rpc.core.context.RpcContextClientPostProcessor;
 import cloud.tianai.rpc.remoting.api.RpcClientPostProcessor;
 import lombok.Data;
@@ -11,6 +12,9 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import static cloud.tianai.rpc.common.constant.CommonConstant.CODEC_KEY;
+import static cloud.tianai.rpc.common.constant.CommonConstant.RPC_PROXY_PROTOCOL;
 
 /**
  * @Author: 天爱有情
@@ -31,8 +35,11 @@ public class RpcClientConfiguration {
     /** 服务注册地址. */
     private URL registryUrl;
 
+    private URL url = new URL();
+
     /** 超时. */
     private Integer timeout = 5000;
+
 
     private boolean lazyLoadRegistry = true;
     private boolean lazyStartRpcClient = true;
@@ -87,5 +94,16 @@ public class RpcClientConfiguration {
             return defVal;
         }
         return val;
+    }
+
+    public void setCodec(String codec) {
+        addParameter(CODEC_KEY, codec);
+    }
+
+    public void addParameter(String key, Object value) {
+        setUrl(getUrl().addParameter(key, value));
+    }
+    public void setProtocol(String protocol) {
+        getUrl().setProtocol(protocol);
     }
 }

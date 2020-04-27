@@ -6,6 +6,8 @@ import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.common.exception.RpcException;
 import cloud.tianai.rpc.common.extension.ExtensionLoader;
 import cloud.tianai.rpc.core.holder.RpcClientHolder;
+import cloud.tianai.rpc.remoting.api.RequestResponseRemotingDataProcessor;
+import cloud.tianai.rpc.remoting.api.SimpleHeartbeatRpcInvocation;
 import lombok.Getter;
 
 import java.util.Objects;
@@ -70,7 +72,7 @@ public class Bootstrap {
             if (Objects.isNull(r)) {
                 throw new RpcException("未找到对应的远程server, protocol=" + protocol);
             }
-            r.start(conf);
+            r.start(url,  new RequestResponseRemotingDataProcessor(new SimpleHeartbeatRpcInvocation()));
             return r;
         });
     }
@@ -79,7 +81,7 @@ public class Bootstrap {
     public void shutdown() {
         if (start.compareAndSet(true, false)) {
             if (remotingClient != null) {
-                remotingClient.stop();
+                remotingClient.destroy();
             }
         }
     }

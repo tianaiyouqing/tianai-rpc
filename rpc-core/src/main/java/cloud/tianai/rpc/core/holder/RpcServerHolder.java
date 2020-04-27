@@ -59,7 +59,7 @@ public class RpcServerHolder {
         rpcServerMap.put(key, rpcServer);
 
         if (oldRpcServer != null) {
-            oldRpcServer.stop();
+            oldRpcServer.destroy();
         }
     }
 
@@ -73,14 +73,14 @@ public class RpcServerHolder {
         String key = getKey(protocol, address);
         RemotingServer rpcServer = rpcServerMap.remove(key);
         if (rpcServer != null) {
-            rpcServer.stop();
+            rpcServer.destroy();
         }
     }
 
     public static void removeRpcServer(String key) {
         RemotingServer rpcServer = rpcServerMap.remove(key);
         if (rpcServer != null) {
-            rpcServer.stop();
+            rpcServer.destroy();
         }
     }
 

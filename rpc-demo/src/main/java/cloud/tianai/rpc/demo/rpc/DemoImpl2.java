@@ -20,11 +20,6 @@ public class DemoImpl2 implements Demo2, Serializable {
 
     @Override
     public DemoRes helloRpc2() {
-        try {
-            TimeUnit.SECONDS.sleep(10);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         DemoRes demoRes = new DemoRes();
         demoRes.setId(IdUtils.getNoRepetitionIdStr());
         demoRes.setData("hello im tianai-rpc [2]");

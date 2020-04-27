@@ -1,8 +1,10 @@
 package cloud.tianai.rpc.core.loadbalance.impl;
 
+import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.remoting.api.RemotingChannelHolder;
 import cloud.tianai.rpc.remoting.api.RemotingClient;
 import cloud.tianai.rpc.remoting.api.RemotingConfiguration;
+import cloud.tianai.rpc.remoting.api.RemotingDataProcessor;
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
 
 import java.net.SocketAddress;
@@ -26,8 +28,9 @@ public class RemotingClientTestImpl implements RemotingClient {
         return null;
     }
 
+
     @Override
-    public RemotingChannelHolder start(RemotingConfiguration config) throws RpcRemotingException {
+    public RemotingChannelHolder start(URL config, RemotingDataProcessor remotingDataProcessor) throws RpcRemotingException {
         return null;
     }
 
@@ -37,8 +40,18 @@ public class RemotingClientTestImpl implements RemotingClient {
     }
 
     @Override
+    public URL getUrl() {
+        return null;
+    }
+
+    @Override
     public boolean isActive() {
         return false;
+    }
+
+    @Override
+    public void destroy() {
+
     }
 
     @Override
@@ -49,11 +62,6 @@ public class RemotingClientTestImpl implements RemotingClient {
     @Override
     public RemotingChannelHolder getChannel() {
         return null;
-    }
-
-    @Override
-    public void stop() {
-
     }
 
     @Override
