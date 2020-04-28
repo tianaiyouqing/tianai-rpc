@@ -155,7 +155,7 @@ public class ServerBootstrap {
     }
 
     public ServerBootstrap register(Class<?> interfaceClazz, Object ref, Map<String, Object> parameters) {
-        if(parameters != null && parameters.size() > 0) {
+        if(parameters != null && !parameters.isEmpty()) {
             // 转换成hashMap
             parameters = new HashMap<>(parameters);
         }else {
