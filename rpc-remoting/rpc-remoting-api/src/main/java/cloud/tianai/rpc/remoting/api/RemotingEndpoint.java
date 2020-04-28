@@ -1,6 +1,7 @@
 package cloud.tianai.rpc.remoting.api;
 
 import cloud.tianai.rpc.common.Node;
+import cloud.tianai.rpc.common.ParametersWrapper;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.remoting.api.exception.RpcRemotingException;
 
@@ -60,4 +61,10 @@ public interface RemotingEndpoint extends Node {
      * @return 对应的权重的值，越小越优先
      */
     int getWeight();
+
+    /**
+     * 获取参数信息
+     * @return
+     */
+    ParametersWrapper getParameters();
 }

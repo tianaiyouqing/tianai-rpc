@@ -1,5 +1,7 @@
 package cloud.tianai.rpc.core.context;
 
+import cloud.tianai.rpc.common.URL;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ public class RpcContext {
 
     private Object request;
     private Object response;
+    private URL remotingUrl;
 
     public void clearAttachments() {
         this.attachments.clear();
@@ -70,6 +73,15 @@ public class RpcContext {
     public RpcContext setResponse(Object response) {
         this.response = response;
         return this;
+    }
+
+    public RpcContext setRemotingUrl(URL remotingUrl) {
+        this.remotingUrl = remotingUrl;
+        return this;
+    }
+
+    public URL getRemotingUrl() {
+        return remotingUrl;
     }
 
     public Object getRequest() {

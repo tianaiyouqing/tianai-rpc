@@ -11,12 +11,12 @@ public interface RpcClientPostProcessor {
      * 请求之前
      * @param request 请求体
      */
-    void beforeRequest(Request request);
+    void beforeRequest(Request request, RemotingClient remotingClient);
 
     /**
      * 请求完成后
      * @param request 请求体
      * @param response 返回数据
      */
-    void requestFinished(Request request, Response response);
+    void requestFinished(Request request, Response response, RemotingClient remotingClient);
 }

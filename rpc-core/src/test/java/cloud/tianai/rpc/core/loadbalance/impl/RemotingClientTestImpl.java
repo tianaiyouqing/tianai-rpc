@@ -1,5 +1,6 @@
 package cloud.tianai.rpc.core.loadbalance.impl;
 
+import cloud.tianai.rpc.common.ParametersWrapper;
 import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.remoting.api.RemotingChannelHolder;
 import cloud.tianai.rpc.remoting.api.RemotingClient;
@@ -83,5 +84,10 @@ public class RemotingClientTestImpl implements RemotingClient {
     @Override
     public int getWeight() {
         return weight;
+    }
+
+    @Override
+    public ParametersWrapper getParameters() {
+        return null;
     }
 }

@@ -21,7 +21,7 @@ public abstract class AbstractRemotingServer extends AbstractRemotingEndpoint im
     private int serverIdleTimeout;
     @Override
     protected void prepareStart() {
-        this.bossThreads = getParametersWrapper().getParameter(RPC_BOSS_THREAD_KEY, DEFAULT_RPC_BOSS_THREAD);
-        this.serverIdleTimeout = getParametersWrapper().getParameter(RPC_SERVER_IDLE_TIMEOUT_KEY, getIdleTimeout() * 3);
+        this.bossThreads = getParameters().getParameter(RPC_BOSS_THREAD_KEY, DEFAULT_RPC_BOSS_THREAD);
+        this.serverIdleTimeout = getParameters().getParameter(RPC_SERVER_IDLE_TIMEOUT_KEY, getIdleTimeout() * 3);
     }
 }

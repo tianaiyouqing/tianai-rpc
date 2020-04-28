@@ -1,5 +1,6 @@
 package cloud.tianai.rpc.core.context;
 
+import cloud.tianai.rpc.remoting.api.RemotingClient;
 import cloud.tianai.rpc.remoting.api.Request;
 import cloud.tianai.rpc.remoting.api.Response;
 import cloud.tianai.rpc.common.sort.Ordered;
@@ -15,8 +16,10 @@ import java.util.Map;
 public class RpcContextClientPostProcessor implements RpcClientPostProcessor, Ordered {
 
     @Override
-    public void beforeRequest(Request request) {
+    public void beforeRequest(Request request, RemotingClient remotingClient) {
         RpcContext rpcContext = RpcContext.getRpcContext();
+        // 设置远程url
+        rpcContext.setRemotingUrl(remotingClient.getUrl());
         Map<String, Object> attachments = rpcContext.getAttachments();
         // 设置附加信息到header
         attachments.forEach(request :: setHeader);
@@ -25,7 +28,7 @@ public class RpcContextClientPostProcessor implements RpcClientPostProcessor, Or
     }
 
     @Override
-    public void requestFinished(Request request, Response response) {
+    public void requestFinished(Request request, Response response, RemotingClient remotingClient) {
         RpcContext.removeContext();
     }
 

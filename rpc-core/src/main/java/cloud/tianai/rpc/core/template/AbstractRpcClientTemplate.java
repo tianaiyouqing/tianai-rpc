@@ -39,29 +39,19 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
 
     @Override
     public Response request(Request request, Integer timeout, Integer connectRetry, Integer requestRetry) throws TimeoutException {
-        // 请求之前
-        beforeRequest(request);
 
-        Object resObj = retryRequest(request, 0, connectRetry, requestRetry);
-        Response response;
-        if (resObj instanceof Response) {
-            response = (Response) resObj;
-        } else {
-            response = new Response(request.getId());
-            response.setResult(resObj);
-            response.setStatus(Response.OK);
-        }
-        // 请求之后
-        requestFinished(request, response);
+        Response response = retryRequest(request, 0, connectRetry, requestRetry);
+
+
         return response;
     }
 
-    protected void requestFinished(Request request, Response response) {
-        rpcClientPostProcessors.forEach(r -> r.requestFinished(request, response));
+    protected void requestFinished(Request request, Response response, RemotingClient remotingClient) {
+        rpcClientPostProcessors.forEach(r -> r.requestFinished(request, response, remotingClient));
     }
 
-    protected void beforeRequest(Request request) {
-        rpcClientPostProcessors.forEach(r -> r.beforeRequest(request));
+    protected void beforeRequest(Request request, RemotingClient remotingClient) {
+        rpcClientPostProcessors.forEach(r -> r.beforeRequest(request, remotingClient));
     }
 
 
@@ -75,11 +65,18 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
      * @return RPC 远程返回的数据
      * @throws TimeoutException 超时异常
      */
-    public Object retryRequest(Request request, int currRetry, final Integer connectRetry, final Integer requestRetry) throws TimeoutException {
+    public Response retryRequest(Request request, int currRetry, final Integer connectRetry, final Integer requestRetry) throws TimeoutException {
         RemotingClient remotingClient = selectRemotingClient(request);
+        // 请求之前
+        beforeRequest(request, remotingClient);
+
         try {
-            Object res = request(remotingClient, request, connectRetry);
-            return res;
+            Object resObj = request(remotingClient, request, connectRetry);
+
+            Response response = warpResponseIfNecessary(resObj, request);
+            // 请求之后
+            requestFinished(request, response, remotingClient);
+            return response;
         } catch (TimeoutException e) {
             currRetry++;
             // 如果超过重试次数， 直接抛异常
@@ -96,6 +93,18 @@ public abstract class AbstractRpcClientTemplate implements RpcClientTemplate {
             log.info("请求重试, 请求体 [{}], 当前已重试次数{}", request, currRetry);
             return retryRequest(request, currRetry, connectRetry, requestRetry);
         }
+    }
+
+    private Response warpResponseIfNecessary(Object resObj, Request request) {
+        Response response;
+        if (resObj instanceof Response) {
+            response = (Response) resObj;
+        } else {
+            response = new Response(request.getId());
+            response.setResult(resObj);
+            response.setStatus(Response.OK);
+        }
+        return response;
     }
 
 

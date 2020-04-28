@@ -67,10 +67,7 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
      */
     private int weight = DEFAULT_WEIGHT;
 
-    @Getter
     private Map<String, String> parameters;
-
-    @Getter
     private ParametersWrapper parametersWrapper;
 
     @Override
@@ -114,6 +111,11 @@ public abstract class AbstractRemotingEndpoint implements RemotingEndpoint {
             start.set(false);
             throw new RpcRemotingException(e);
         }
+    }
+
+    @Override
+    public ParametersWrapper getParameters() {
+        return parametersWrapper;
     }
 
     /**

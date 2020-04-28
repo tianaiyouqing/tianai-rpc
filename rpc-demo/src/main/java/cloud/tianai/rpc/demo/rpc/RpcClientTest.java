@@ -7,6 +7,7 @@ import cloud.tianai.rpc.common.URL;
 import cloud.tianai.rpc.core.client.proxy.RpcProxy;
 import cloud.tianai.rpc.core.client.proxy.impl.jdk.JdkRpcProxy;
 import cloud.tianai.rpc.core.context.RpcContext;
+import cloud.tianai.rpc.remoting.api.RemotingClient;
 import cloud.tianai.rpc.remoting.api.Request;
 import cloud.tianai.rpc.remoting.api.Response;
 import cloud.tianai.rpc.remoting.api.RpcClientPostProcessor;
@@ -44,14 +45,13 @@ public class RpcClientTest {
         prop.setProtocol("netty");
         prop.setLoadBalance("random");
         prop.addRpcClientPostProcessor(new RpcClientPostProcessor() {
+
             @Override
-            public void beforeRequest(Request request) {
-                // 添加附加数据
-                RpcContext.getRpcContext().setAttachment("bbb", "hello");
+            public void beforeRequest(Request request, RemotingClient remotingClient) {
             }
 
             @Override
-            public void requestFinished(Request request, Response response) {
+            public void requestFinished(Request request, Response response, RemotingClient remotingClient) {
 
             }
         });
