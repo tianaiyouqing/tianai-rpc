@@ -27,7 +27,7 @@ public class RandomLoadBalance extends AbstractLoadBalance {
 
         for (int i = 0; i < size; i++) {
             int weight = getWeight(rpcClients.get(i));
-            weights[i] = weight;
+            weights[i] = totalWeight;
             // Sum
             totalWeight += weight;
             if (sameWeight && totalWeight != weight * (i + 1)) {
@@ -52,5 +52,10 @@ public class RandomLoadBalance extends AbstractLoadBalance {
     @Override
     public String getName() {
         return NAME;
+    }
+
+
+    public static void main(String[] args) {
+        System.out.println(RemotingClient.class);
     }
 }
