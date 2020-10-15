@@ -20,31 +20,26 @@ public class RandomLoadBalance extends AbstractLoadBalance {
     protected RemotingClient doSelect(List<RemotingClient> rpcClients, Request request) {
         int size = rpcClients.size();
         int[] weights = new int[size];
-
-        int firstWeight =getWeight(rpcClients.get(0));
-        weights[0] = firstWeight;
+        // 判断权重是否都相同
         boolean sameWeight = true;
         // 总权重，用来计算随机权重
-        int totalWeight= firstWeight;
+        int totalWeight= 0;
 
-        for (int i = 1; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             int weight = getWeight(rpcClients.get(i));
             weights[i] = weight;
             // Sum
             totalWeight += weight;
-            if (sameWeight && weight != firstWeight) {
-                // 设置相同权重为 false
+            if (sameWeight && totalWeight != weight * (i + 1)) {
                 sameWeight = false;
             }
         }
-
         // 通过权重进行随机
-        if(totalWeight != 0 && !sameWeight) {
+        if(totalWeight > 0 && !sameWeight) {
             int offset = ThreadLocalRandom.current().nextInt(totalWeight);
             for (int i = 0; i < size; i++) {
                 // 设置的权重越大减为0的几率也就越大，概率也就越大
-                offset -= weights[i];
-                if(offset < 0) {
+                if(offset < weights[i]) {
                     return rpcClients.get(i);
                 }
             }
