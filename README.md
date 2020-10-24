@@ -23,7 +23,7 @@ public class RpcServerImplTest2 {
 
     public static void main(String[] args) throws InterruptedException {
         ServerBootstrap serverBootstrap = new ServerBootstrap();
-        serverBootstrap.codec("hessian2")
+        serverBootstrap.codec("protostuff")
                 .timeout(5000)
                 // 设置服务注册为zookeeper， 支持zookeeper和nacos两个服务注册
                 .registry(new URL("zookeeper", "127.0.0.1", 2181))
@@ -44,8 +44,8 @@ public class RpcClientTest {
 
     public static void main(String[] args) {
         RpcClientConfiguration prop = new RpcClientConfiguration();
-        // 序列化，默认是hessian2
-        prop.setCodec("hessian2");
+        // 序列化，默认是protostuff
+        prop.setCodec("protostuff");
         // 超时，默认是5000
         prop.setTimeout(5000);
         // 请求超时，默认是3000
