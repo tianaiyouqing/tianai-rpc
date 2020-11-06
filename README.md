@@ -1,6 +1,8 @@
 # TIANAI-RPC
 - 这是一个rpc框架的实现
 - 本人闲暇之余写的RPC框架，供学习使用，(线上还是用成熟的RPC框架比较好，比如 dubbo,grpc等)
+- 该框架已在本人项目中测试，性能卓越，且相比 dubbo 框架 代码更加轻量级，阅读学习rpc框架的话，
+  阅读该框架源码那是不二之选(代码中有些部分参考了dubbo)
 ---
 > 该RPC框架目前实现有
 - 基于zookeeper 和 nacos 的服务注册, 
@@ -21,7 +23,7 @@ public class RpcServerImplTest2 {
 
     public static void main(String[] args) throws InterruptedException {
         ServerBootstrap serverBootstrap = new ServerBootstrap();
-        serverBootstrap.codec("hessian2")
+        serverBootstrap.codec("protostuff")
                 .timeout(5000)
                 // 设置服务注册为zookeeper， 支持zookeeper和nacos两个服务注册
                 .registry(new URL("zookeeper", "127.0.0.1", 2181))
@@ -42,8 +44,8 @@ public class RpcClientTest {
 
     public static void main(String[] args) {
         RpcClientConfiguration prop = new RpcClientConfiguration();
-        // 序列化，默认是hessian2
-        prop.setCodec("hessian2");
+        // 序列化，默认是protostuff
+        prop.setCodec("protostuff");
         // 超时，默认是5000
         prop.setTimeout(5000);
         // 请求超时，默认是3000
@@ -71,3 +73,4 @@ public class RpcClientTest {
 }
 
 ```
+- qq群: 1021884609
