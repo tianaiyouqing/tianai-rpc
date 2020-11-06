@@ -1,5 +1,6 @@
 package cloud.tianai.rpc.common.lock;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -17,6 +18,12 @@ public class RpcSpinLock implements RpcLock {
         boolean flag;
         do {
             flag = this.spinLock.compareAndSet(true, false);
+            if (!flag) {
+                try {
+                    // 避免死循环造成的cpu飙升
+                    TimeUnit.NANOSECONDS.sleep(1);
+                } catch (InterruptedException ignored) {}
+            }
         }
         while (!flag);
     }

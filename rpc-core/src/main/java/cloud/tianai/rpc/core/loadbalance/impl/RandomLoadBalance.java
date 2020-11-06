@@ -27,9 +27,10 @@ public class RandomLoadBalance extends AbstractLoadBalance {
 
         for (int i = 0; i < size; i++) {
             int weight = getWeight(rpcClients.get(i));
-            weights[i] = totalWeight;
             // Sum
             totalWeight += weight;
+
+            weights[i] = totalWeight;
             if (sameWeight && totalWeight != weight * (i + 1)) {
                 sameWeight = false;
             }
