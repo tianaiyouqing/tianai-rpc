@@ -1,7 +1,7 @@
 package cloud.tianai.rpc.common.lock;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * @Author: 天爱有情
@@ -10,7 +10,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class RpcSpinLock implements RpcLock {
 
-    /** true: Can lock, false : in lock.. */
+    /**
+     * true: Can lock, false : in lock..
+     */
     private AtomicBoolean spinLock = new AtomicBoolean(true);
 
     @Override
@@ -19,10 +21,8 @@ public class RpcSpinLock implements RpcLock {
         do {
             flag = this.spinLock.compareAndSet(true, false);
             if (!flag) {
-                try {
-                    // 避免死循环造成的cpu飙升
-                    TimeUnit.NANOSECONDS.sleep(1);
-                } catch (InterruptedException ignored) {}
+                // 避免死循环造成的cpu飙升
+                LockSupport.parkNanos(1);
             }
         }
         while (!flag);
