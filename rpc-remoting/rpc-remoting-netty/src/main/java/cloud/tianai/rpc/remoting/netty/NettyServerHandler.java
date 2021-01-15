@@ -47,14 +47,14 @@ public class NettyServerHandler extends ChannelDuplexHandler {
         if(msg != null) {
             super.write(ctx, msg, promise);
         }
+        // 如果返回空，视为内部处理了，这层不做任何处理
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        // 回送异常信息
-
-        ctx.close();
         super.exceptionCaught(ctx, cause);
+        // 关闭通道
+        ctx.close();
     }
 
 

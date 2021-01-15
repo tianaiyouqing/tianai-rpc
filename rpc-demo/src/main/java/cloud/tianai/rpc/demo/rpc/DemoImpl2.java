@@ -19,6 +19,12 @@ public class DemoImpl2 implements Demo2, Serializable {
     }
 
     @Override
+    public String login(String username, String password) {
+        System.out.println("login被调用6+++++");
+        return null;
+    }
+
+    @Override
     public DemoRes helloRpc2() {
         DemoRes demoRes = new DemoRes();
         demoRes.setId(IdUtils.getNoRepetitionIdStr());

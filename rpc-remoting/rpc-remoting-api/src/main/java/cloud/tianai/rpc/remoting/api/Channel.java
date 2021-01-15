@@ -27,6 +27,10 @@ public interface Channel {
      * @return
      */
     SocketAddress getRemoteAddress();
+    /**
+     * 关闭管道
+     */
+    void close();
 
     /**
      * 获取对应的真实的channel类， 比如Netty的channel

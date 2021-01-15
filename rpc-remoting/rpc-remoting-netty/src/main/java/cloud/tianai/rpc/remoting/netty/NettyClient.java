@@ -77,7 +77,7 @@ public class NettyClient extends AbstractRemotingClient {
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast("Encoder", new NettyEncoder(getRemotingDataCodec(), getRemotingDataProcessor()));
-                        pipeline.addLast("Decoder", new NettyDecoder(getRemotingDataCodec()));
+                        pipeline.addLast("Decoder", new NettyDecoder(getRemotingDataCodec(), getRemotingDataProcessor()));
                         // client 处理只读心跳
                         pipeline.addLast("client-idle-handler",
                                 new IdleStateHandler(getIdleTimeout(), 0, 0, MILLISECONDS));

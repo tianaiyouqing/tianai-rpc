@@ -1,8 +1,13 @@
 package cloud.tianai.rpc.remoting.codec.api.exception;
 
-import cloud.tianai.rpc.common.exception.RpcException;
+import cloud.tianai.rpc.common.exception.ServiceNotSupportedException;
 
-public class CodecException extends RpcException {
+/**
+ * @Author: 天爱有情
+ * @date 2021/1/15 16:37
+ * @Description 编码解码异常
+ */
+public class CodecException extends ServiceNotSupportedException {
 
     public CodecException() {
     }

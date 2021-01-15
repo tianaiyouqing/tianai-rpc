@@ -1,6 +1,7 @@
 package cloud.tianai.rpc.remoting.netty;
 
 import cloud.tianai.rpc.remoting.api.RemotingDataProcessor;
+import cloud.tianai.rpc.common.exception.ServiceNotSupportedException;
 import cloud.tianai.rpc.remoting.codec.api.RemotingDataCodec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -23,11 +24,13 @@ public class NettyEncoder extends MessageToByteEncoder<Object> {
             out.writeInt(bytes.length);
             out.writeBytes(bytes);
         } catch (Exception ex) {
-            if (dataProcessor.support(msg)) {
-                dataProcessor.sendError(new NettyChannelAdapter(ctx.channel()), ex, msg);
-            }else {
-                throw ex;
+            if (!(ex instanceof ServiceNotSupportedException)) {
+                // 包装成服务不支持异常
+                ex = new ServiceNotSupportedException(ex);
             }
+            // 加码异常
+            // 包装成服务不支持异常
+            dataProcessor.sendError(new NettyChannelAdapter(ctx.channel()), ex, msg);
         }
     }
 }

@@ -46,9 +46,9 @@ public class Response extends Header implements Serializable {
     public static final byte BAD_RESPONSE = 50;
 
     /**
-     * service not found.
+     * 服务不支持状态码
      */
-    public static final byte SERVICE_NOT_FOUND = 60;
+    public static final byte SERVICE_NOT_SUPPORTED = 60;
 
     /**
      * service error.

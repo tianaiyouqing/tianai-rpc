@@ -39,6 +39,14 @@ public class NettyChannelAdapter implements Channel {
     }
 
     @Override
+    public void close() {
+        // 关闭通道，不间断等待
+//        this.unsafe.close().awaitUninterruptibly();
+        // 异步关闭通道
+        this.unsafe.close();
+    }
+
+    @Override
     public Object getUnsafe() {
         return unsafe;
     }
