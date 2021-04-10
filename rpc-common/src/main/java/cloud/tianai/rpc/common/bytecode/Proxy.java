@@ -4,9 +4,8 @@ package cloud.tianai.rpc.common.bytecode;
 import cloud.tianai.rpc.common.util.ClassUtils;
 import cloud.tianai.rpc.common.util.ReflectUtils;
 
-import javax.imageio.stream.FileImageOutputStream;
-import java.io.FileOutputStream;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -29,6 +28,8 @@ public abstract class Proxy {
     private static final AtomicLong PROXY_CLASS_COUNTER = new AtomicLong(0);
     private static final String PACKAGE_NAME = Proxy.class.getPackage().getName();
     private static final Map<ClassLoader, Map<String, Object>> PROXY_CACHE_MAP = new WeakHashMap<ClassLoader, Map<String, Object>>();
+    // cache class, avoid PermGen OOM.
+    private static final Map<ClassLoader, Map<String, Object>> PROXY_CLASS_MAP = new WeakHashMap<ClassLoader, Map<String, Object>>();
 
     private static final Object PENDING_GENERATION_MARKER = new Object();
 
@@ -82,8 +83,11 @@ public abstract class Proxy {
 
         // get cache by class loader.
         final Map<String, Object> cache;
+        // cache class
+        final Map<String, Object> classCache;
         synchronized (PROXY_CACHE_MAP) {
             cache = PROXY_CACHE_MAP.computeIfAbsent(cl, k -> new HashMap<>());
+            classCache = PROXY_CLASS_MAP.computeIfAbsent(cl, k -> new HashMap<>());
         }
 
         Proxy proxy = null;
@@ -97,14 +101,38 @@ public abstract class Proxy {
                     }
                 }
 
-                if (value == PENDING_GENERATION_MARKER) {
-                    try {
-                        cache.wait();
-                    } catch (InterruptedException e) {
+                // get Class by key.
+                Object clazzObj = classCache.get(key);
+                if (null == clazzObj || clazzObj instanceof Reference<?>) {
+                    Class<?> clazz = null;
+                    if (clazzObj instanceof Reference<?>) {
+                        clazz = (Class<?>) ((Reference<?>) clazzObj).get();
                     }
-                } else {
-                    cache.put(key, PENDING_GENERATION_MARKER);
-                    break;
+
+                    if (null == clazz) {
+                        if (value == PENDING_GENERATION_MARKER) {
+                            try {
+                                cache.wait();
+                            } catch (InterruptedException e) {
+                            }
+                        } else {
+                            cache.put(key, PENDING_GENERATION_MARKER);
+                            break;
+                        }
+                    } else {
+                        try {
+                            proxy = (Proxy) clazz.newInstance();
+                            return proxy;
+                        } catch (InstantiationException | IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        } finally {
+                            if (null == proxy) {
+                                cache.remove(key);
+                            } else {
+                                cache.put(key, new WeakReference<Proxy>(proxy));
+                            }
+                        }
+                    }
                 }
             }
             while (true);
@@ -135,9 +163,6 @@ public abstract class Proxy {
                 for (Method method : ics[i].getMethods()) {
                     String desc = ReflectUtils.getDesc(method);
                     if (worked.contains(desc) || Modifier.isStatic(method.getModifiers())) {
-                        continue;
-                    }
-                    if (ics[i].isInterface() && Modifier.isStatic(method.getModifiers())) {
                         continue;
                     }
                     worked.add(desc);
@@ -182,10 +207,11 @@ public abstract class Proxy {
             ccm.setSuperClass(Proxy.class);
             ccm.addMethod("public Object newInstance(" + InvocationHandler.class.getName() + " h){ return new " + pcn + "($1); }");
             Class<?> pc = ccm.toClass();
-
-
-
             proxy = (Proxy) pc.newInstance();
+
+            synchronized (classCache) {
+                classCache.put(key, new SoftReference<Class<?>>(pc));
+            }
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {

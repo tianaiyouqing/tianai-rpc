@@ -63,7 +63,7 @@ public class RpcClientTest {
 
         // 远程 客户端
 //        RpcProxy<Demo> rpcProxy = new JdkRpcProxy<>();
-        Demo2 proxy = RpcProxyFactory.create(Demo2.class, prop, RpcProxyType.JDK_PROXY);
+        Demo2 proxy = RpcProxyFactory.create(Demo2.class, prop, RpcProxyType.JAVASSIST_PROXY);
         // 添加附加数据
         RpcContext.getRpcContext().setAttachment("AAA", 123);
         System.out.println(proxy.helloRpc2());
