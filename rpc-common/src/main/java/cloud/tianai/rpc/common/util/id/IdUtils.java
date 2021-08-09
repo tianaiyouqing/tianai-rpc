@@ -13,6 +13,7 @@ public class IdUtils {
 
 
     private static final SnowflakeIdGenerator SNOWFLAKE_ID_GENERATOR = new SnowflakeIdGenerator();
+    private static final Sequence SEQUENCE = new Sequence();
 
     public static String getIdForSnowflake() {
         return SNOWFLAKE_ID_GENERATOR.generateId();
@@ -20,7 +21,7 @@ public class IdUtils {
 
 
     public static String getNoRepetitionIdStr() {
-        return getIdForSnowflake();
+        return new String(String.valueOf(SEQUENCE.nextId()));
     }
 
     /**
