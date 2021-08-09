@@ -1,8 +1,8 @@
 package cloud.tianai.rpc.core.loadbalance.impl;
 
+import cloud.tianai.rpc.core.loadbalance.AbstractLoadBalance;
 import cloud.tianai.rpc.remoting.api.RemotingClient;
 import cloud.tianai.rpc.remoting.api.Request;
-import cloud.tianai.rpc.core.loadbalance.AbstractLoadBalance;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -23,7 +23,7 @@ public class RandomLoadBalance extends AbstractLoadBalance {
         // 判断权重是否都相同
         boolean sameWeight = true;
         // 总权重，用来计算随机权重
-        int totalWeight= 0;
+        int totalWeight = 0;
 
         for (int i = 0; i < size; i++) {
             int weight = getWeight(rpcClients.get(i));
@@ -36,11 +36,11 @@ public class RandomLoadBalance extends AbstractLoadBalance {
             }
         }
         // 通过权重进行随机
-        if(totalWeight > 0 && !sameWeight) {
+        if (totalWeight > 0 && !sameWeight) {
             int offset = ThreadLocalRandom.current().nextInt(totalWeight);
             for (int i = 0; i < size; i++) {
                 // 设置的权重越大减为0的几率也就越大，概率也就越大
-                if(offset < weights[i]) {
+                if (offset < weights[i]) {
                     return rpcClients.get(i);
                 }
             }
@@ -54,7 +54,6 @@ public class RandomLoadBalance extends AbstractLoadBalance {
     public String getName() {
         return NAME;
     }
-
 
     public static void main(String[] args) {
         System.out.println(RemotingClient.class);

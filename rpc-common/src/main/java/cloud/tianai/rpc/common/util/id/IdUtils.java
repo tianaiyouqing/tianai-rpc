@@ -11,17 +11,16 @@ import java.util.UUID;
  **/
 public class IdUtils {
 
-    /**
-     * 主机和进程的机器码
-     */
-    private static final Sequence WORKER = new Sequence();
 
-    public static long getNoRepetitionId() {
-        return WORKER.nextId();
+    private static final SnowflakeIdGenerator SNOWFLAKE_ID_GENERATOR = new SnowflakeIdGenerator();
+
+    public static String getIdForSnowflake() {
+        return SNOWFLAKE_ID_GENERATOR.generateId();
     }
 
+
     public static String getNoRepetitionIdStr() {
-        return String.valueOf(WORKER.nextId());
+        return getIdForSnowflake();
     }
 
     /**
